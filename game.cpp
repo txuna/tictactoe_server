@@ -29,6 +29,9 @@ int Game::GameObject::GameLoop(Net::TcpSocket *socket)
     {
         int retval = el.FetchEvent();
         ProcessEvent(retval);
+
+        // @@TODO Send Game State All Player 
+        SendGameState();
     }
 
     return C_OK;
@@ -103,6 +106,7 @@ void Game::GameObject::ProcessClientInput(Net::TcpSocket *socket, int mask)
             el.DelEvent(socket);
             return;
         }
+
     }
     else
     {
@@ -142,4 +146,9 @@ int Game::GameObject::ProcessClientProtocol(Protocol *p)
     }
 
     return C_OK;
+}
+
+void Game::GameObject::SendGameState()
+{
+    
 }

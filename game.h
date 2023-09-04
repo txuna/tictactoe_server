@@ -24,6 +24,7 @@ namespace Game
             int ProcessAccept(Net::TcpSocket *socket, int mask);
             void ProcessClientInput(Net::TcpSocket *socket, int mask);
             int ProcessClientProtocol(Protocol *p);
+            void SendGameState();
     };
 }
 
