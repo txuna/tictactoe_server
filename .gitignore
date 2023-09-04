@@ -1,0 +1,14 @@
+*.conf
+*.json 
+*.vscode
+.vscode
+.vscode/
+test/
+bin/
+*.o
+test
+a.out 
+.gdb_history
+app
+server
+script
