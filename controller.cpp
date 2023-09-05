@@ -1,11 +1,11 @@
 #include "controller.h"
 #include "utility.h"
 
-Controller::Authentication::Authentication(Mysql::DB &dbc)
-: db_connection(dbc)
+Controller::Authentication::Authentication(Mysql::DB &dbc, Redis::DB &rc)
+: db_connection(dbc), redis_conn(rc)
 {
-    account_service = new Service::AccountService(dbc);
-    player_service = new Service::PlayerService(dbc);
+    account_service = new Service::AccountService(dbc, rc);
+    player_service = new Service::PlayerService(dbc, rc);
 }
 
 Controller::Authentication::~Authentication()

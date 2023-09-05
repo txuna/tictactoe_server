@@ -6,6 +6,7 @@
 #include "tmysql.h"
 #include "model.h"
 #include "common.h"
+#include "tredis.h"
 
 namespace Service
 {
@@ -13,9 +14,10 @@ namespace Service
     {
         private:
             Mysql::DB &db_connection;
+            Redis::DB &redis_conn;
 
         public:
-            AccountService(Mysql::DB &dbc);
+            AccountService(Mysql::DB &dbc, Redis::DB &rc);
             ~AccountService();
             std::tuple<ErrorCode, Model::Account*> LoadAccount(std::string req_email);
             std::tuple<ErrorCode, uint64_t> InsertAccount(std::string email, 
@@ -30,9 +32,10 @@ namespace Service
     {
         private:
             Mysql::DB &db_connection;
+            Redis::DB &redis_conn;
 
         public:
-            PlayerService(Mysql::DB &dbc);
+            PlayerService(Mysql::DB &dbc, Redis::DB &rc);
             ~PlayerService();
             ErrorCode CreatePlayer(uint64_t user_id);
     };

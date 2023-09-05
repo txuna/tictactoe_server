@@ -2,8 +2,8 @@
 #include <iostream>
 #include <sstream>
 
-Service::AccountService::AccountService(Mysql::DB &dbc)
-: db_connection(dbc)
+Service::AccountService::AccountService(Mysql::DB &dbc, Redis::DB &rc)
+: db_connection(dbc), redis_conn(rc)
 {
 
 }
@@ -109,8 +109,8 @@ ErrorCode Service::AccountService::DeleteUser(uint64_t user_id)
 }
 
 
-Service::PlayerService::PlayerService(Mysql::DB &dbc)
-: db_connection(dbc)
+Service::PlayerService::PlayerService(Mysql::DB &dbc, Redis::DB &rc)
+: db_connection(dbc), redis_conn(rc)
 {
 
 }

@@ -12,6 +12,7 @@
 #include "common.h"
 #include "tmysql.h"
 #include "service.h"
+#include "tredis.h"
 
 namespace Controller
 {
@@ -24,11 +25,12 @@ namespace Controller
     {
         private:
             Mysql::DB &db_connection;
+            Redis::DB &redis_conn;
             Service::AccountService *account_service;
             Service::PlayerService *player_service;
 
         public:
-            Authentication(Mysql::DB &dbc);
+            Authentication(Mysql::DB &dbc, Redis::DB &rc);
             ~Authentication();
 
             void Login(const json &req);

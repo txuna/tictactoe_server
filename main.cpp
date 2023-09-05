@@ -6,24 +6,39 @@
 #include "model.h"
 #include "controller.h"
 #include "game.h"
+#include "tredis.h"
 
 int main(int argc, char **argv)
 {
-    std::string user, password, mport, host, sport, db_name;
+    std::string user, password, mport, host, sport, db_name, redis_host, redis_port;
     Game::GameObject *game_object = nullptr;
     Net::TcpSocket *socket = nullptr;
 
-    if(ParseConfig(&user, &password, &mport, &host, &sport, &db_name) == C_ERR)
+    if(ParseConfig(&user, 
+                   &password, 
+                   &mport, 
+                   &host, 
+                   &sport, 
+                   &db_name,
+                   &redis_host,
+                   &redis_port) == C_ERR)
     {
         std::cout<<"Failed Parse Config File"<<std::endl;
         return 1;
     }
 
     Mysql::DB db = Mysql::DB(host, mport, user, password);
+    Redis::DB redis_db = Redis::DB(redis_host, redis_port);
 
     if(db.Connect(db_name) == false)
     {
-        std::cout<<"Failed Connect DB"<<std::endl;
+        std::cout<<"Failed Connect Mysql"<<std::endl;
+        return 1;
+    }
+
+    if(redis_db.Connect() == false)
+    {
+        std::cout<<"Failed Connect Redis"<<std::endl;
         return 1;
     }
 
@@ -37,7 +52,7 @@ int main(int argc, char **argv)
     }
 
     //@@TODO GAME OBJECT 생성 
-    game_object = new Game::GameObject(db); 
+    game_object = new Game::GameObject(db, redis_db); 
     if(game_object->GameLoop(socket) == C_ERR)
     {
         std::cout<<"Failed Start Game Loop"<<std::endl;
@@ -81,7 +96,9 @@ int ParseConfig(std::string *user,
                 std::string *mport, 
                 std::string *host, 
                 std::string *sport,
-                std::string *db_name)
+                std::string *db_name,
+                std::string *redis_host, 
+                std::string *redis_port)
 {
     std::ifstream file("./config.conf");
     std::stringstream buffer;
@@ -131,6 +148,16 @@ int ParseConfig(std::string *user,
                 else if(key.compare("database") == 0)
                 {
                     *db_name = value;
+                }
+
+                else if(key.compare("redis_host") == 0)
+                {
+                    *redis_host = value;
+                }
+                
+                else if(key.compare("redis_port") == 0)
+                {
+                    *redis_port = value;
                 }
             }
         }

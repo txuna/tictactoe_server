@@ -1,7 +1,7 @@
 #include "game.h"
 
-Game::GameObject::GameObject(Mysql::DB &dbc)
-: db_connection(dbc)
+Game::GameObject::GameObject(Mysql::DB &dbc, Redis::DB &rc)
+: db_connection(dbc), redis_conn(rc)
 {
     
 }
@@ -120,18 +120,19 @@ void Game::GameObject::ProcessClientInput(Net::TcpSocket *socket, int mask)
 int Game::GameObject::ProcessClientProtocol(Protocol *p)
 {
     json j = p->ProcessingMsg();
+
     switch (p->protocol)
     {
         case ClientMsg::Login:
         {
-            Controller::Authentication controller(db_connection);
+            Controller::Authentication controller(db_connection, redis_conn);
             controller.Login(j);
             break;
         }
         
         case ClientMsg::Register:
         {
-            Controller::Authentication controller(db_connection);
+            Controller::Authentication controller(db_connection, redis_conn);
             controller.Register(j);
             break;
         }
@@ -146,6 +147,17 @@ int Game::GameObject::ProcessClientProtocol(Protocol *p)
     }
 
     return C_OK;
+}
+
+bool Game::GameObject::VerifyMiddleware(Protocol *p)
+{
+    if(p->protocol == ClientMsg::Login 
+        || p->protocol == ClientMsg::Register)
+    {
+        return true;
+    }
+
+    return auth_middleware.VerityToken();
 }
 
 void Game::GameObject::SendGameState()

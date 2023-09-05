@@ -2,7 +2,7 @@
 tictactoe를 즐길 수 있는 클라이언트와 서버
 
 # Stack 
-Server : C++, Mysql  
+Server : C++, Mysql, redis
 Client : 제작중(Unity예상)  
 
 # Architecture 
@@ -13,10 +13,13 @@ Client : 제작중(Unity예상)
 # Dependency
 1. [nlohmann/json.hpp](https://github.com/nlohmann/json)  
 2. [mysql connector/c++ 8.0(up)](https://github.com/mysql/mysql-connector-cpp)  
-3. [openssl 3.0(up)](https://github.com/openssl/openssl)    
+3. [openssl 3.0(up)](https://github.com/openssl/openssl)  
+4. [hiredis](https://github.com/redis/hiredis)   
 
 # Compile 
 ```
+git clone https://github.com/txuna/tictactoe_server.git
+cd tictactoe_server
 make
 ./server
 ```

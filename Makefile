@@ -1,11 +1,11 @@
 
-CPPFLAGS = -I /usr/include/mysql-cppconn-8/  -I /usr/include/openssl
-LDLIBS = -lmysqlcppconn8 -lcrypto
+CPPFLAGS = -I /usr/include/mysql-cppconn-8/
+LDLIBS = -lmysqlcppconn8 -lcrypto -lhiredis
 
 all: server
 
-server: main.o sock.o tevents.o tmysql.o service.o controller.o model.o game.o utility.o
-	g++ -g -o server -g main.o sock.o tevents.o tmysql.o service.o controller.o model.o game.o utility.o $(LDLIBS)
+server: main.o sock.o tevents.o tmysql.o service.o controller.o model.o game.o utility.o middleware.o tredis.o
+	g++ -g -o server -g main.o sock.o tevents.o tmysql.o service.o controller.o model.o game.o utility.o middleware.o tredis.o $(LDLIBS)
 
 main.o: main.h main.cpp
 	g++ $(CPPFLAGS) -c -g -o main.o main.cpp
@@ -33,6 +33,12 @@ game.o: game.h game.cpp
 
 utility.o: utility.h utility.cpp
 	g++ $(CPPFLAGS) -c -g -o utility.o utility.cpp
+
+middleware.o: middleware.h middleware.cpp 
+	g++ $(CPPFLAGS) -c -g -o middleware.o middleware.cpp
+
+tredis.o: tredis.h tredis.cpp
+	g++ $(CPPFLAGS) -c -g -o tredis.o tredis.cpp
 
 clean:
 	rm *.o server

@@ -14,7 +14,9 @@ int ParseConfig(std::string *user,
                 std::string *mport, 
                 std::string *host, 
                 std::string *sport,
-                std::string *db_name);
+                std::string *db_name,
+                std::string *redis_host,
+                std::string *redis_port);
 
 
 
