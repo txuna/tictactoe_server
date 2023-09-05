@@ -117,6 +117,9 @@ void Game::GameObject::ProcessClientInput(Net::TcpSocket *socket, int mask)
     return;
 }
 
+/*
+    Client 입력 처리
+*/
 int Game::GameObject::ProcessClientProtocol(Protocol *p)
 {
     json j = p->ProcessingMsg();
@@ -148,6 +151,11 @@ int Game::GameObject::ProcessClientProtocol(Protocol *p)
 
     return C_OK;
 }
+
+/*
+    Redis에 저장된 토큰 검사 
+    p에 token이 포함되어 있는지 확인 필수
+*/
 
 bool Game::GameObject::VerifyMiddleware(Protocol *p)
 {

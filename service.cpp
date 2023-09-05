@@ -13,7 +13,7 @@ Service::AccountService::~AccountService()
     
 }
 
-std::tuple<ErrorCode, uint64_t> Service::AccountService::InsertAccount(std::string email, std::string password, std::string salt, std::string name)
+std::tuple<ErrorCode, uuid_t> Service::AccountService::InsertAccount(std::string email, std::string password, std::string salt, std::string name)
 {
     if(!db_connection.IsOpen())
     {
@@ -22,7 +22,7 @@ std::tuple<ErrorCode, uint64_t> Service::AccountService::InsertAccount(std::stri
 
     try
     {
-        uint64_t user_id; 
+        uuid_t user_id; 
 
         mysqlx::Table table = db_connection.GetTable("accounts");
         mysqlx::Result result = table.insert("email", "password", "salt", "name")
@@ -41,7 +41,7 @@ std::tuple<ErrorCode, uint64_t> Service::AccountService::InsertAccount(std::stri
 
 std::tuple<ErrorCode, Model::Account*> Service::AccountService::LoadAccount(std::string req_email)
 {
-    int user_id;
+    uuid_t user_id;
     std::stringstream email; 
     std::stringstream password;
     std::stringstream salt; 
@@ -86,7 +86,7 @@ std::tuple<ErrorCode, Model::Account*> Service::AccountService::LoadAccount(std:
     }
 }
 
-ErrorCode Service::AccountService::DeleteUser(uint64_t user_id)
+ErrorCode Service::AccountService::DeleteUser(uuid_t user_id)
 {
     if(!db_connection.IsOpen())
     {
@@ -121,7 +121,7 @@ Service::PlayerService::~PlayerService()
 }
 
 //@@TODO : ErrorCode확인하고 None이 아니라면 accounts - user_id에 해당하는거 삭제
-ErrorCode Service::PlayerService::CreatePlayer(uint64_t user_id)
+ErrorCode Service::PlayerService::CreatePlayer(uuid_t user_id)
 {
     if(!db_connection.IsOpen())
     {

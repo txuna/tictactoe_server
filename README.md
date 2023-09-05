@@ -2,7 +2,7 @@
 tictactoe를 즐길 수 있는 클라이언트와 서버
 
 # Stack 
-Server : C++, Mysql, redis
+Server : C++, Mysql, redis  
 Client : 제작중(Unity예상)  
 
 # Architecture 

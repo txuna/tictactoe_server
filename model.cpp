@@ -1,6 +1,6 @@
 #include "model.h"
 
-Model::Account::Account(int user_id, 
+Model::Account::Account(uuid_t user_id, 
                         std::string email, 
                         std::string password, 
                         std::string salt, 
@@ -14,6 +14,16 @@ Model::Account::Account(int user_id,
 }
 
 Model::Account::~Account()
+{
+
+}
+
+Model::RedisUser::RedisUser(std::string n, std::string token, uuid_t u)
+{
+
+}
+
+Model::RedisUser::~RedisUser()
 {
 
 }

@@ -18,11 +18,14 @@ Controller::Authentication::~Authentication()
     1. load account model from email
     2. check password (set password hash using stored salt)
     3. Create Token and store in memory(user)
+
+    4. store user info in redis
 */
 void Controller::Authentication::Login(const json& req)
 {
     std::string email = req["email"];
     std::string password = req["password"];
+    std::string token;
     
     Model::Account *account;
     ErrorCode result;
@@ -41,8 +44,8 @@ void Controller::Authentication::Login(const json& req)
         return;
     }
 
+    token = Utility::Security::GenerateToken();
     std::cout<<"Logined!"<<std::endl;
-    std::cout<<Utility::Security::GenerateToken()<<std::endl;
 
     delete account;
     return;
@@ -62,7 +65,7 @@ void Controller::Authentication::Register(const json& req)
     std::string hash = Utility::Security::GenerateHash("hello", salt);
 
     ErrorCode result;
-    uint64_t user_id; 
+    uuid_t user_id; 
 
     std::tie(result, user_id) = account_service->InsertAccount(email, hash, salt, name);
 
@@ -91,4 +94,25 @@ void Controller::Authentication::Register(const json& req)
 void Controller::Authentication::Logout(const json& req)
 {
     
+}
+
+ErrorCode Controller::Authentication::StoreUserInRedis(Model::Account *account, std::string token)
+{
+    json j = {
+        {"user_id", account->user_id}, 
+        {"email", account->email},
+        {"name", account->name},
+        {"token", token}
+    };
+
+    std::string key = account->user_id + "_" + account->name;
+    std::string j_str = to_string(j);
+    ErrorCode result = redis_conn.StoreString(key ,j_str);
+
+    return result;
+}
+
+void Controller::Authentication::LoadUserFromRedis()
+{
+
 }

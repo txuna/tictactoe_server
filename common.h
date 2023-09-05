@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <vector>
 
+typedef uint32_t uuid_t;
 typedef uint32_t socket_t;
 typedef uint32_t protocol_t; 
 typedef uint32_t length_t;
@@ -46,6 +47,7 @@ enum ErrorCode
     None = 0,
     MysqlError = 1,
     MysqlConnectionClose = 2,
+    RedisError = 3,
 
     /* 101 ~ 200 Account */
     NoneExistAccount = 101,

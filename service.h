@@ -20,12 +20,12 @@ namespace Service
             AccountService(Mysql::DB &dbc, Redis::DB &rc);
             ~AccountService();
             std::tuple<ErrorCode, Model::Account*> LoadAccount(std::string req_email);
-            std::tuple<ErrorCode, uint64_t> InsertAccount(std::string email, 
+            std::tuple<ErrorCode, uuid_t> InsertAccount(std::string email, 
                                     std::string password, 
                                     std::string salt, 
                                     std::string name);
 
-            ErrorCode DeleteUser(uint64_t user);
+            ErrorCode DeleteUser(uuid_t user);
     };
 
     class PlayerService
@@ -37,7 +37,7 @@ namespace Service
         public:
             PlayerService(Mysql::DB &dbc, Redis::DB &rc);
             ~PlayerService();
-            ErrorCode CreatePlayer(uint64_t user_id);
+            ErrorCode CreatePlayer(uuid_t user_id);
     };
 }
 

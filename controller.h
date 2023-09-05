@@ -14,6 +14,9 @@
 #include "service.h"
 #include "tredis.h"
 
+using json = nlohmann::json;
+using namespace nlohmann::literals;
+
 namespace Controller
 {
     class BaseController
@@ -36,6 +39,8 @@ namespace Controller
             void Login(const json &req);
             void Register(const json &req);
             void Logout(const json &req);
+            ErrorCode StoreUserInRedis(Model::Account *account, std::string token);
+            void LoadUserFromRedis();
     };
 }
 
