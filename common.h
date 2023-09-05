@@ -75,11 +75,20 @@ class Protocol
             delete []msg;
         }
 
-        json ProcessingMsg()
+        json ProcessingMsg(int *err)
         {
             std::vector<byte_t> data(msg, msg+length);
-            json j = json::from_msgpack(data); 
-            return j;
+            try
+            {
+                json j = json::from_msgpack(data); 
+                *err = 0;
+                return j;
+            }
+            catch(const std::exception& e)
+            {
+                *err = 1;
+                return json();
+            }
         }
 };
 

@@ -48,13 +48,13 @@ ErrorCode Redis::DB::StoreString(std::string key, std::string value)
 
 std::tuple<ErrorCode, std::string> Redis::DB::LoadString(std::string key)
 {
-    redisReply *reply = (redisReply*)redisCommand(conn, "GET %s", key);
-    
-    if(reply->type == REDIS_REPLY_ERROR)
+    redisReply *reply = (redisReply*)redisCommand(conn, "GET %s", key.c_str());
+    if(reply->type == REDIS_REPLY_NIL)
     {
         return std::make_tuple(ErrorCode::RedisError, "");
     }
 
+    std::string value = reply->str;
     freeReplyObject(reply);
-    return std::make_tuple(ErrorCode::None, reply->str);
+    return std::make_tuple(ErrorCode::None, value);
 }

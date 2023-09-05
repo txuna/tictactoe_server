@@ -128,7 +128,14 @@ void Game::GameObject::ProcessClientInput(Net::TcpSocket *socket, int mask)
 */
 int Game::GameObject::ProcessClientProtocol(Net::TcpSocket* socket, Protocol *p)
 {
-    json j = p->ProcessingMsg();
+    int err;
+    json j = p->ProcessingMsg(&err);
+    
+    if(err == 1)
+    {
+        return C_ERR;
+    }
+
     json res;
     protocol_t type;
 
@@ -209,14 +216,13 @@ bool Game::GameObject::VerifyMiddleware(Protocol *p, json& j)
     std::tie(result, str_json) = redis_conn.LoadString(std::to_string(user_id) + "_user");
     if(result != ErrorCode::None)
     {
-        std::cout<<"Cannot Found User"<<std::endl;
         return false;
     }
 
     json stored_j = json::parse(str_json);
+
     if(stored_j["token"] != j["token"])
     {
-        std::cout<<"Invalid Token"<<std::endl;
         return false;
     }
 
