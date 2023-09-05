@@ -48,10 +48,12 @@ enum ErrorCode
     MysqlError = 1,
     MysqlConnectionClose = 2,
     RedisError = 3,
+    InvalidRequest = 4,
 
     /* 101 ~ 200 Account */
     NoneExistAccount = 101,
-
+    InvalidPassword = 102,
+    AlreadyExistEmail = 103,
     /* 201 ~ 300 Game */
 };
 

@@ -20,9 +20,24 @@ Controller::Authentication::~Authentication()
     3. Create Token and store in memory(user)
 
     4. store user info in redis
+
+    추후 Response형태로 만들어러 return 
 */
-void Controller::Authentication::Login(const json& req)
+json Controller::Authentication::Login(const json& req)
 {
+    json response = {
+        {"error", ErrorCode::None},
+        {"token", ""},
+        {"user_id", 0}
+    };
+
+    if(req.contains("email") == false 
+    || req.contains("password") == false)
+    {
+        response["error"] = ErrorCode::InvalidRequest;
+        return response;
+    }
+
     std::string email = req["email"];
     std::string password = req["password"];
     std::string token;
@@ -33,36 +48,59 @@ void Controller::Authentication::Login(const json& req)
 
     if(result != ErrorCode::None)
     {
-        std::cout<<"Login Error: "<<result<<std::endl;
-        return;
+        response["error"] = result;
+        return response;
     }
 
     std::string n_hash = Utility::Security::GenerateHash(password, account->salt);
     if(n_hash != account->password)
     {
-        std::cout<<"Incorreted Password"<<std::endl;
-        return;
+        response["error"] = ErrorCode::InvalidPassword;
+        return response;
     }
 
     token = Utility::Security::GenerateToken();
-    std::cout<<"Logined!"<<std::endl;
+
+    result = StoreUserInRedis(account, token);
+    if(result != ErrorCode::None)
+    {
+        response["error"] = result;
+        return response;
+    }
+
+    response["token"] = token;
+    response["user_id"] = account->user_id;
 
     delete account;
-    return;
+    return response;
 }
 
 /*
+    1. 필드 확인
+
     1. check alreayd has account 
     2. check duplicated email 
     3. insert account 
 */
-void Controller::Authentication::Register(const json& req)
+json Controller::Authentication::Register(const json& req)
 {
-    std::string email = "test1234@naver.com"; 
-    std::string password = "hello"; 
-    std::string name = "tuuna";
+    json response = {
+        {"error", ErrorCode::None}
+    };
+
+    if(req.contains("email") == false
+    || req.contains("password") == false
+    || req.contains("name") == false)
+    {
+        response["error"] = ErrorCode::InvalidRequest;
+        return response;
+    }
+
+    std::string email = req["email"]; 
+    std::string password = req["password"]; 
+    std::string name = req["name"];
     std::string salt = Utility::Security::GenerateSalt(24);
-    std::string hash = Utility::Security::GenerateHash("hello", salt);
+    std::string hash = Utility::Security::GenerateHash(password, salt);
 
     ErrorCode result;
     uuid_t user_id; 
@@ -71,24 +109,21 @@ void Controller::Authentication::Register(const json& req)
 
     if(result != ErrorCode::None)
     {
-        std::cout<<"Insert Error: "<<result<<std::endl;
-        return;
+        response["error"] = ErrorCode::AlreadyExistEmail;
+        return response;
     }
-
-    std::cout<<"Register Account"<<std::endl;
-    std::cout<<"user id: "<<user_id<<std::endl;
 
     result = player_service->CreatePlayer(user_id);
     if(result != ErrorCode::None)
     {
-        std::cout<<"Create Player Error: "<<std::endl;
-        std::cout<<"delete account"<<std::endl;
-
         result = account_service->DeleteUser(user_id);
-        return;
+        response["error"] = ErrorCode::MysqlError;
+        return response;
     }
 
-    return;
+    std::cout << std::setw(4) << response << '\n';
+
+    return response;
 }
 
 void Controller::Authentication::Logout(const json& req)
@@ -105,14 +140,9 @@ ErrorCode Controller::Authentication::StoreUserInRedis(Model::Account *account, 
         {"token", token}
     };
 
-    std::string key = account->user_id + "_" + account->name;
+    std::string key = std::to_string(account->user_id) + "_user";
     std::string j_str = to_string(j);
+
     ErrorCode result = redis_conn.StoreString(key ,j_str);
-
     return result;
-}
-
-void Controller::Authentication::LoadUserFromRedis()
-{
-
 }

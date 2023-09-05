@@ -36,11 +36,10 @@ namespace Controller
             Authentication(Mysql::DB &dbc, Redis::DB &rc);
             ~Authentication();
 
-            void Login(const json &req);
-            void Register(const json &req);
+            json Login(const json &req);
+            json Register(const json &req);
             void Logout(const json &req);
             ErrorCode StoreUserInRedis(Model::Account *account, std::string token);
-            void LoadUserFromRedis();
     };
 }
 

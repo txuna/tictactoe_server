@@ -4,7 +4,7 @@
 Redis::DB::DB(std::string h, std::string p)
 : host(h), port(p)
 {
-    
+    expire_time = 3600;
 }
 
 Redis::DB::~DB()
@@ -34,7 +34,7 @@ bool Redis::DB::Connect()
 
 ErrorCode Redis::DB::StoreString(std::string key, std::string value)
 {
-    redisReply *reply = (redisReply*)redisCommand(conn, "SET %s %s", key.c_str(), value.c_str());
+    redisReply *reply = (redisReply*)redisCommand(conn, "SET %s %s EX %d", key.c_str(), value.c_str(), expire_time);
     ErrorCode result = ErrorCode::None;
 
     if(reply->type == REDIS_REPLY_ERROR)

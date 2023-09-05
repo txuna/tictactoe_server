@@ -101,12 +101,14 @@ void Game::GameObject::ProcessClientInput(Net::TcpSocket *socket, int mask)
             return;
         }
 
-        if(ProcessClientProtocol(p) == C_ERR)
+        if(ProcessClientProtocol(socket, p) == C_ERR)
         {
             el.DelEvent(socket);
+            delete p;
             return;
         }
 
+        delete p;
     }
     else
     {
@@ -120,23 +122,34 @@ void Game::GameObject::ProcessClientInput(Net::TcpSocket *socket, int mask)
 /*
     Client 입력 처리
 */
-int Game::GameObject::ProcessClientProtocol(Protocol *p)
+int Game::GameObject::ProcessClientProtocol(Net::TcpSocket* socket, Protocol *p)
 {
     json j = p->ProcessingMsg();
+    json res;
+    protocol_t type;
+
+    if(VerifyMiddleware(p, j) == false)
+    {
+        return C_ERR;
+    }
 
     switch (p->protocol)
     {
         case ClientMsg::Login:
         {
             Controller::Authentication controller(db_connection, redis_conn);
-            controller.Login(j);
+            res = controller.Login(j);
+            type = ServerMsg::LoginResponse;
+            std::cout << std::setw(4) << res << '\n';
             break;
         }
         
         case ClientMsg::Register:
         {
             Controller::Authentication controller(db_connection, redis_conn);
-            controller.Register(j);
+            res = controller.Register(j);
+            type = ServerMsg::RegisterResponse;
+            std::cout << std::setw(4) << res << '\n';
             break;
         }
             
@@ -149,6 +162,11 @@ int Game::GameObject::ProcessClientProtocol(Protocol *p)
             return C_ERR;
     }
 
+    if(socket->SendSocket(res, type) == C_ERR)
+    {
+        return C_ERR;
+    }
+
     return C_OK;
 }
 
@@ -157,7 +175,7 @@ int Game::GameObject::ProcessClientProtocol(Protocol *p)
     p에 token이 포함되어 있는지 확인 필수
 */
 
-bool Game::GameObject::VerifyMiddleware(Protocol *p)
+bool Game::GameObject::VerifyMiddleware(Protocol *p, json& j)
 {
     if(p->protocol == ClientMsg::Login 
         || p->protocol == ClientMsg::Register)
@@ -165,7 +183,34 @@ bool Game::GameObject::VerifyMiddleware(Protocol *p)
         return true;
     }
 
-    return auth_middleware.VerityToken();
+    if(j.contains("token") == false
+    || j.contains("user_id") == false)
+    {
+        std::cout<<"Invalid Request"<<std::endl;
+        return false;
+    }
+
+    std::string token = j["token"];
+    uuid_t user_id = j["user_id"];
+
+    std::string str_json; 
+    ErrorCode result; 
+
+    std::tie(result, str_json) = redis_conn.LoadString(std::to_string(user_id) + "_user");
+    if(result != ErrorCode::None)
+    {
+        std::cout<<"Cannot Found User"<<std::endl;
+        return false;
+    }
+
+    json stored_j = json::parse(str_json);
+    if(stored_j["token"] != j["token"])
+    {
+        std::cout<<"Invalid Token"<<std::endl;
+        return false;
+    }
+
+    return true;
 }
 
 void Game::GameObject::SendGameState()

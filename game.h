@@ -18,7 +18,7 @@ namespace Game
             Epoll::EventLoop el;
             Mysql::DB &db_connection;
             Redis::DB &redis_conn;
-            Middleware::AuthMiddleware auth_middleware;
+            //Middleware::AuthMiddleware auth_middleware;
 
         public:
             GameObject(Mysql::DB &dbc, Redis::DB &rc);
@@ -27,9 +27,9 @@ namespace Game
             void ProcessEvent(int retval);
             int ProcessAccept(Net::TcpSocket *socket, int mask);
             void ProcessClientInput(Net::TcpSocket *socket, int mask);
-            int ProcessClientProtocol(Protocol *p);
+            int ProcessClientProtocol(Net::TcpSocket *socket, Protocol *p);
             void SendGameState();
-            bool VerifyMiddleware(Protocol *p);
+            bool VerifyMiddleware(Protocol *p, json& j);
     };
 }
 

@@ -171,8 +171,28 @@ int Net::TcpSocket::ReadMsg(length_t length, byte_t *msg)
     return C_OK;
 }
 
-int Net::TcpSocket::SendSocket()
+int Net::TcpSocket::SendSocket(json& j, protocol_t p)
 {
+    std::vector<byte_t> v = json::to_msgpack(j);
+    byte_t *msg = reinterpret_cast<byte_t*>(v.data());
+    length_t length = v.size();
+
+    byte_t *buffer = new byte_t[sizeof(protocol_t) + sizeof(length_t) + length]();
+
+    int offset = 0;
+    memcpy(buffer+offset, &p, sizeof(protocol_t));
+    offset += sizeof(protocol_t);
+    memcpy(buffer+offset, &length, sizeof(length_t));
+    offset += sizeof(length_t);
+    memcpy(buffer+offset, msg, length);
+    offset += length;
+
+    int ret = write(socket_fd, buffer, offset);
+    if(ret <= 0)
+    {
+        return C_ERR;
+    }
+
     return C_OK;
 }
 

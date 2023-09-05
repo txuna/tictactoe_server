@@ -11,6 +11,8 @@
 #include <unistd.h>
 #include "common.h"
 
+using json = nlohmann::json;
+using namespace nlohmann::literals;
 
 namespace Net
 {
@@ -43,7 +45,7 @@ namespace Net
             int ListenSocket();
             TcpSocket *AcceptSocket();
             Protocol *ReadSocket();
-            int SendSocket();
+            int SendSocket(json& j, protocol_t p);
             int ReadHeader(protocol_t *protocol, length_t *length);
             int ReadMsg(length_t length, byte_t *msg);
     };

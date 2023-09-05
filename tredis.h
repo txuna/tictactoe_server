@@ -16,6 +16,7 @@ namespace Redis
             redisContext* conn = nullptr;
             std::string host;
             std::string port;
+            uint64_t expire_time;
 
         public:
             DB(std::string h, std::string p);
