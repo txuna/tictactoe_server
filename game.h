@@ -9,6 +9,8 @@
 #include "tredis.h"
 #include "controller.h"
 
+#include <vector>
+
 namespace Game
 {
     class GameObject
@@ -18,8 +20,8 @@ namespace Game
             Epoll::EventLoop el;
             Mysql::DB &db_connection;
             Redis::DB &redis_conn;
-            //Middleware::AuthMiddleware auth_middleware;
-
+            std::vector<Model::Player*> players;
+            
         public:
             GameObject(Mysql::DB &dbc, Redis::DB &rc);
             ~GameObject();
@@ -30,6 +32,11 @@ namespace Game
             int ProcessClientProtocol(Net::TcpSocket *socket, Protocol *p);
             void SendGameState();
             bool VerifyMiddleware(Protocol *p, json& j);
+            void AddPlayer(uuid_t user_id, socket_t fd);
+            void DelPlayer(uuid_t user_id);
+            void DelPlayerFromSock(socket_t fd);
+            Model::Player *LoadPlayer(uuid_t user_id);
+            void Debug();
     };
 }
 

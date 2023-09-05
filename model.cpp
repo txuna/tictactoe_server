@@ -18,12 +18,13 @@ Model::Account::~Account()
 
 }
 
-Model::RedisUser::RedisUser(std::string n, std::string token, uuid_t u)
+Model::Player::Player(uuid_t u, socket_t f)
+: user_id(u), fd(f)
 {
 
 }
 
-Model::RedisUser::~RedisUser()
+Model::Player::~Player()
 {
 
 }

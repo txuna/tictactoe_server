@@ -26,15 +26,13 @@ namespace Model
             ~Account();
     };
 
-    class RedisUser
+    class Player
     {
         public:
-            std::string name; 
-            std::string token; 
-            uuid_t user_id;
-
-            RedisUser(std::string n, std::string token, uuid_t u);
-            ~RedisUser();
+            uuid_t user_id; 
+            socket_t fd;
+            Player(uuid_t u, socket_t f);
+            ~Player();
     };
 }
 

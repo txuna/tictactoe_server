@@ -54,7 +54,6 @@ Mysql::DB::~DB()
     }
     
     is_close = true; 
-    sess->close();
 
     if(
         from_options == nullptr 
@@ -63,6 +62,8 @@ Mysql::DB::~DB()
     {
         return;
     }
+
+    sess->close();
     
     delete from_options; 
     delete sess;
