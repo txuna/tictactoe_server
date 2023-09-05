@@ -81,6 +81,7 @@ json Controller::Authentication::Login(const json& req)
     1. check alreayd has account 
     2. check duplicated email 
     3. insert account 
+    4. check duplicate name
 */
 json Controller::Authentication::Register(const json& req)
 {
