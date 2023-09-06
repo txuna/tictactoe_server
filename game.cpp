@@ -213,6 +213,16 @@ int Game::GameObject::ProcessClientProtocol(Net::TcpSocket* socket, Protocol *p)
 
         case ClientMsg::RoomJoin:
         {
+            int room_id;
+            Controller::RoomController controller(db_connection, redis_conn);
+            std::tie(res, room_id) = controller.JoinRoom(j);
+            if(res["error"] == ErrorCode::None)
+            {
+                /* Append user_id in room */
+            }
+
+            type = ServerMsg::RoomJoinResponse;
+            std::cout << std::setw(4) << res << '\n';
             break;
         }
 

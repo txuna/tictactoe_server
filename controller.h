@@ -54,13 +54,14 @@ namespace Controller
             ~RoomController();
 
             std::tuple<json, Model::Room*> CreateRoom(const json &req, int *room_index); 
-            std::tuple<json, uuid_t> JoinRoom(const json &req);
+            std::tuple<json, int> JoinRoom(const json &req);
             json StartRoom(const json &req);
             json ExitRoom(const json &req);
             json LoadRoom(const json &req);
             ErrorCode StoreRoomInRedis(Model::Room *room, std::string key);
             ErrorCode ChangePlayer(uuid_t user_id, json player_j, PlayerState state);
             std::tuple<ErrorCode, json> LoadPlayer(uuid_t user_id);
+            std::tuple<ErrorCode, json> LoadRoom(std::string title);
     };
 }
 

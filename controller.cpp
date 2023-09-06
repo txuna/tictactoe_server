@@ -222,9 +222,10 @@ std::tuple<json, Model::Room*> Controller::RoomController::CreateRoom(const json
     uuid_t user_id = req["user_id"]; 
     std::string title = req["title"];
     std::string load_str; 
+    json room_j;
 
     // 중복 방 검사
-    std::tie(result, load_str) = redis_conn.LoadString(title+"_room");
+    std::tie(result, room_j) = LoadRoom(title);
     // DUPLICATE!!!
     if(result == ErrorCode::None)
     {
@@ -255,7 +256,7 @@ std::tuple<json, Model::Room*> Controller::RoomController::CreateRoom(const json
         return std::make_tuple(response, nullptr);
     }
 
-    Model::Room* room = new Model::Room(user_id, RoomState::RoomWaiting, title, *room_index);
+    Model::Room* room = new Model::Room(user_id, RoomState::RoomReady, title, *room_index);
 
     result = StoreRoomInRedis(room, title+"_room");
     // @@TODO 플레이어 상태 롤백 
@@ -272,7 +273,7 @@ std::tuple<json, Model::Room*> Controller::RoomController::CreateRoom(const json
 
 // 자신이 이미 방에 들어가 있는지 확인 
 // 방이 실제로 존재하며 WAITING 상태인지 확인 
-std::tuple<json, uuid_t> Controller::RoomController::JoinRoom(const json &req)
+std::tuple<json, int> Controller::RoomController::JoinRoom(const json &req)
 {
     json response = {
         {"error", ErrorCode::None}
@@ -286,7 +287,7 @@ std::tuple<json, uuid_t> Controller::RoomController::JoinRoom(const json &req)
         return std::make_tuple(response, 0); 
     }
     
-    if(req["title"].type() == json::value_t::string)
+    if(req["title"].type() != json::value_t::string)
     {
         response["error"] = ErrorCode::InvalidRequest;
         return std::make_tuple(response, 0);
@@ -296,13 +297,26 @@ std::tuple<json, uuid_t> Controller::RoomController::JoinRoom(const json &req)
     std::string load_str; 
     ErrorCode result;
     json player_j;
+    json room_j;
     
     // 요청한 방이 있는지 확인
-    std::tie(result, load_str) = redis_conn.LoadString(title+"_room"); 
+    std::tie(result, room_j) = LoadRoom(title); 
     if(result != ErrorCode::None)
     {
         response["error"] = ErrorCode::NoneExistRoom;
         return std::make_tuple(response, 0); 
+    }
+
+    if(room_j["state"] == RoomState::RoomPlaying)
+    {
+        response["error"] = ErrorCode::AlreadyRoomPlaying;
+        return std::make_tuple(response, 0);
+    }
+
+    if(room_j["host_user_id"] == user_id)
+    {
+        response["error"] = ErrorCode::AlreadyHost;
+        return std::make_tuple(response, 0);
     }
 
     // player 정보도 가지고 와서 현재 참여중인지 확인 
@@ -313,7 +327,32 @@ std::tuple<json, uuid_t> Controller::RoomController::JoinRoom(const json &req)
         return std::make_tuple(response, 0);
     }
 
-    return std::make_tuple(response, user_id);
+    if(player_j["state"] == PlayerState::Playing)
+    {
+        response["error"] = ErrorCode::AlreadyPlaying;
+        return std::make_tuple(response, 0);
+    }
+
+    // 플레이어랑 방 정보 변경 및 저장 
+    player_j["state"] = PlayerState::Playing;
+    room_j["other_user_id"] = user_id; 
+    room_j["state"] = RoomState::RoomPlaying;
+
+    result = redis_conn.StoreString(title+"_room", to_string(room_j));    
+    if(result != ErrorCode::None)
+    {
+        response["error"] = ErrorCode::RedisError;
+        return std::make_tuple(response, 0);
+    }
+    
+    result = redis_conn.StoreString(std::to_string(user_id)+"_user", to_string(player_j));
+    if(result != ErrorCode::None)
+    {
+        response["error"] = ErrorCode::RedisError;
+        return std::make_tuple(response, 0);
+    }
+
+    return std::make_tuple(response, room_j["room_id"]);
 }
 
 json Controller::RoomController::StartRoom(const json &req)
@@ -348,9 +387,9 @@ ErrorCode Controller::RoomController::StoreRoomInRedis(Model::Room *room, std::s
 
     json j = {
         {"host_user_id", room->host_user_id}, 
-        {"other_user_Id", room->other_user_id},
-        {"room_state", room->room_state}, 
-        {"room_title", room->room_title}, 
+        {"other_user_id", room->other_user_id},
+        {"state", room->room_state}, 
+        {"title", room->room_title}, 
         {"room_id", room->room_id}
     };
 
@@ -387,4 +426,20 @@ std::tuple<ErrorCode, json> Controller::RoomController::LoadPlayer(uuid_t user_i
     // Player 상태 변경 후 다시 저장 
     json player_j = json::parse(load_str);
     return std::make_tuple(ErrorCode::None, player_j);
+}
+
+std::tuple<ErrorCode, json> Controller::RoomController::LoadRoom(std::string title)
+{
+    ErrorCode result;
+    std::string load_str;
+    json j;
+
+    std::tie(result, load_str) = redis_conn.LoadString(title+"_room");
+    if(result != ErrorCode::None)
+    {
+        return std::make_tuple(result, j);
+    }
+
+    j = json::parse(load_str);
+    return std::make_tuple(result, j);
 }

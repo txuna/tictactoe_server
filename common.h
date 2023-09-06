@@ -35,8 +35,7 @@ enum PlayerState
 
 enum RoomState
 {
-    RoomWaiting = 0,
-    RoomReady,
+    RoomReady = 0,
     RoomPlaying,
 };
 
@@ -85,6 +84,8 @@ enum ErrorCode
     NoneExistRoom = 202,
     NoneExistPlayer = 203,
     AlreadyPlaying = 204,
+    AlreadyRoomPlaying = 205,
+    AlreadyHost = 206,
 };
 
 class Protocol
