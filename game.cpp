@@ -98,6 +98,7 @@ void Game::GameObject::ProcessClientInput(Net::TcpSocket *socket, int mask)
         Protocol *p = socket->ReadSocket();
         if(p == nullptr)
         {
+            // ROOM 정보도 삭제
             DelPlayerFromSock(socket->socket_fd);
             el.DelEvent(socket);
             return;
@@ -133,6 +134,7 @@ int Game::GameObject::ProcessClientProtocol(Net::TcpSocket* socket, Protocol *p)
     
     if(err == 1)
     {
+        std::cout<<"Parsing Error"<<std::endl;
         return C_ERR;
     }
 
@@ -143,7 +145,7 @@ int Game::GameObject::ProcessClientProtocol(Net::TcpSocket* socket, Protocol *p)
     {
         std::cout<<"Invalid Token"<<std::endl;
         res["error"] = ErrorCode::InvalidToken;
-        return C_OK;
+        return C_ERR;
     }
 
     switch (p->protocol)
@@ -155,7 +157,7 @@ int Game::GameObject::ProcessClientProtocol(Net::TcpSocket* socket, Protocol *p)
 
             if(res["error"] == ErrorCode::None)
             {
-                AddPlayer(res["user_id"], socket->socket_fd);
+                AddPlayer(res["user_id"], socket->socket_fd, PlayerState::Lobby);
             }
 
             type = ServerMsg::LoginResponse;
@@ -190,6 +192,39 @@ int Game::GameObject::ProcessClientProtocol(Net::TcpSocket* socket, Protocol *p)
             std::cout << std::setw(4) << res << '\n';
             break;
         }
+
+        case ClientMsg::RoomCreate:
+        {
+            Model::Room* room;
+            Controller::RoomController controller(db_connection, redis_conn);
+            std::tie(res, room) = controller.CreateRoom(j, &room_index);
+            if(res["error"] == ErrorCode::None)
+            {
+                /* Add Room Object in rooms */
+                AddRoom(room);
+                /* set player state */
+                ChangePlayerState(j["user_id"], PlayerState::Playing);
+            }
+
+            type = ServerMsg::RoomCreateResponse;
+            std::cout << std::setw(4) << res << '\n';
+            break;
+        }
+
+        case ClientMsg::RoomJoin:
+        {
+            break;
+        }
+
+        case ClientMsg::RoomStart:
+        {
+            break;
+        }
+
+        case ClientMsg::RoomExit:
+        {
+            break;
+        }
             
         default:
             return C_ERR;
@@ -222,6 +257,12 @@ bool Game::GameObject::VerifyMiddleware(Protocol *p, json& j)
         return false;
     }
 
+    if(j["token"].type() != json::value_t::string
+    || j["user_id"].type() != json::value_t::number_unsigned)
+    {
+        return false;
+    }
+
     std::string token = j["token"];
     uuid_t user_id = j["user_id"];
 
@@ -246,9 +287,9 @@ bool Game::GameObject::VerifyMiddleware(Protocol *p, json& j)
 
 
 // 중복시 최근껄로 대입
-void Game::GameObject::AddPlayer(uuid_t user_id, socket_t fd)
+void Game::GameObject::AddPlayer(uuid_t user_id, socket_t fd, PlayerState state)
 {
-    Model::Player *p = new Model::Player(user_id, fd);
+    Model::Player *p = new Model::Player(user_id, fd, state);
 
     players.push_back(p);
 }
@@ -300,6 +341,28 @@ Model::Player *Game::GameObject::LoadPlayer(uuid_t user_id)
     }
 
     return nullptr;
+}
+
+void Game::GameObject::AddRoom(Model::Room *room)
+{
+    rooms.push_back(room);
+}
+
+void Game::GameObject::ChangePlayerState(uuid_t user_id, PlayerState state)
+{
+    auto it = std::find_if(players.begin(), players.end(), 
+                        [user_id](Model::Player *p){
+                            return p->user_id == user_id;
+                        });
+
+    if(it != players.end())
+    {
+        Model::Player *p = *it;
+        p->state = state;
+        return;
+    }   
+
+    return;
 }
 
 

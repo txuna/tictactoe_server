@@ -18,13 +18,24 @@ Model::Account::~Account()
 
 }
 
-Model::Player::Player(uuid_t u, socket_t f)
-: user_id(u), fd(f)
+Model::Player::Player(uuid_t u, socket_t f, PlayerState s)
+: user_id(u), fd(f), state(s)
 {
 
 }
 
 Model::Player::~Player()
+{
+
+}
+
+Model::Room::Room(uuid_t h, RoomState rs, std::string rt, int ri)
+: host_user_id(h), room_state(rs), room_title(rt), room_id(ri), other_user_id(0)
+{
+    
+}
+
+Model::Room::~Room()
 {
 
 }

@@ -27,11 +27,29 @@ using namespace nlohmann::literals;
 #define C_ERR -1
 #define C_YET -2
 
+enum PlayerState
+{
+    Lobby = 0,
+    Playing = 1,
+};
+
+enum RoomState
+{
+    RoomWaiting = 0,
+    RoomReady,
+    RoomPlaying,
+};
+
 enum ServerMsg
 {
     LoginResponse = 0, 
     RegisterResponse = 1, 
     LogoutResponse = 2,
+    RoomCreateResponse = 3, 
+    RoomStartResponse = 4,
+    RoomExitResponse = 5,
+    RoomJoinResponse = 6,
+    RoomLoadResponse = 7,
 };
 
 enum ClientMsg
@@ -39,6 +57,11 @@ enum ClientMsg
     Login = 0, 
     Register = 1, 
     Logout = 2,
+    RoomCreate = 3, 
+    RoomStart = 4,
+    RoomExit = 5,
+    RoomJoin = 6,
+    RoomLoad = 7
 };
 
 enum ErrorCode
@@ -58,6 +81,10 @@ enum ErrorCode
     NoneExistAccountInRedis = 104,
 
     /* 201 ~ 300 Game */
+    DuplicatedRoomTitle = 201,
+    NoneExistRoom = 202,
+    NoneExistPlayer = 203,
+    AlreadyPlaying = 204,
 };
 
 class Protocol
