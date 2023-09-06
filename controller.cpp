@@ -127,9 +127,19 @@ json Controller::Authentication::Register(const json& req)
     return response;
 }
 
-void Controller::Authentication::Logout(const json& req)
+// redis에서 유저 삭제
+json Controller::Authentication::Logout(const json& req)
 {
-    
+    json response = {
+        {"error", ErrorCode::None}
+    };
+
+    uuid_t user_id = req["user_id"];
+
+    ErrorCode result = redis_conn.DelKey(std::to_string(user_id)+"_user");
+    response["error"] = result;
+
+    return response;
 }
 
 ErrorCode Controller::Authentication::StoreUserInRedis(Model::Account *account, std::string token)

@@ -38,7 +38,7 @@ namespace Controller
 
             json Login(const json &req);
             json Register(const json &req);
-            void Logout(const json &req);
+            json Logout(const json &req);
             ErrorCode StoreUserInRedis(Model::Account *account, std::string token);
     };
 }

@@ -141,7 +141,9 @@ int Game::GameObject::ProcessClientProtocol(Net::TcpSocket* socket, Protocol *p)
 
     if(VerifyMiddleware(p, j) == false)
     {
-        return C_ERR;
+        std::cout<<"Invalid Token"<<std::endl;
+        res["error"] = ErrorCode::InvalidToken;
+        return C_OK;
     }
 
     switch (p->protocol)
@@ -169,9 +171,23 @@ int Game::GameObject::ProcessClientProtocol(Net::TcpSocket* socket, Protocol *p)
             std::cout << std::setw(4) << res << '\n';
             break;
         }
-            
+        
+        /*
+            players 목록에서도 삭제
+            방목록에서도 삭제
+        */
         case ClientMsg::Logout:
         {
+            Controller::Authentication controller(db_connection, redis_conn);
+            res = controller.Logout(j);
+
+            if(res["error"] == ErrorCode::None)
+            {
+                DelPlayer(j["user_id"]);
+            }
+
+            type = ServerMsg::LogoutResponse;
+            std::cout << std::setw(4) << res << '\n';
             break;
         }
             
@@ -203,7 +219,6 @@ bool Game::GameObject::VerifyMiddleware(Protocol *p, json& j)
     if(j.contains("token") == false
     || j.contains("user_id") == false)
     {
-        std::cout<<"Invalid Request"<<std::endl;
         return false;
     }
 
@@ -238,11 +253,29 @@ void Game::GameObject::AddPlayer(uuid_t user_id, socket_t fd)
     players.push_back(p);
 }
 
+/*
+    추후 방정보나 게임정보등에서도 배제하기
+*/
 void Game::GameObject::DelPlayer(uuid_t user_id)
 {
     auto it = std::find_if(players.begin(), players.end(), 
                         [user_id](Model::Player *p){
                             return p->user_id == user_id;
+                        });
+
+    if(it != players.end())
+    {
+        Model::Player *p = *it;
+        players.erase(it);
+        delete p;
+    }
+}
+
+void Game::GameObject::DelPlayerFromSock(socket_t fd)
+{
+    auto it = std::find_if(players.begin(), players.end(), 
+                        [fd](Model::Player *p){
+                            return p->fd == fd;
                         });
 
     if(it != players.end())
@@ -269,20 +302,6 @@ Model::Player *Game::GameObject::LoadPlayer(uuid_t user_id)
     return nullptr;
 }
 
-void Game::GameObject::DelPlayerFromSock(socket_t fd)
-{
-    auto it = std::find_if(players.begin(), players.end(), 
-                        [fd](Model::Player *p){
-                            return p->fd == fd;
-                        });
-
-    if(it != players.end())
-    {
-        Model::Player *p = *it;
-        players.erase(it);
-        delete p;
-    }
-}
 
 void Game::GameObject::Debug()
 {

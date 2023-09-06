@@ -25,6 +25,7 @@ namespace Redis
 
             ErrorCode StoreString(std::string key, std::string value);
             std::tuple<ErrorCode, std::string> LoadString(std::string key);
+            ErrorCode DelKey(std::string key);
     };
 }
 

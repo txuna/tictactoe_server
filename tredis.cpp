@@ -58,3 +58,18 @@ std::tuple<ErrorCode, std::string> Redis::DB::LoadString(std::string key)
     freeReplyObject(reply);
     return std::make_tuple(ErrorCode::None, value);
 }
+
+ErrorCode Redis::DB::DelKey(std::string key)
+{
+    redisReply *reply = (redisReply*)redisCommand(conn, "DEL %s", key.c_str());
+    if(reply->type == REDIS_REPLY_INTEGER)
+    {
+        if(reply->integer == 0)
+        {
+            return ErrorCode::NoneExistAccountInRedis;
+        }
+    }
+
+    freeReplyObject(reply);
+    return ErrorCode::None;
+}
