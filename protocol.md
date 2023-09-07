@@ -69,7 +69,7 @@
 {
     "token" : STRING, 
     "user_id" : INTEGER, 
-    "title" : STRING
+    "room_id" : INTEGER
 }
 ```
 
@@ -85,7 +85,7 @@
 {
     "token" : STRING
     "user_id" : INTEGER
-    "title" : STRING
+    "room_id" : INTEGER
 }
 ```
 
@@ -101,7 +101,7 @@
 {
     "token" : STRING
     "user_id" : INTEGER
-    "title" : STRING
+    "room_id" : INTEGER
 }
 ```
 

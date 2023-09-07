@@ -116,6 +116,11 @@ void Game::GameObject::ProcessClientInput(Net::TcpSocket *socket, int mask)
         del_flag = true;
     }
 
+    /*
+        is_start
+        현재 게임중일 경우 해당 유저가 host인지 other인지 확인하고 반대편 사람에게 승리했음을 알려주기
+        아니면 여기서 포인트 정산?
+    */
     if(del_flag)
     {
         Model::Player* player = players.LoadPlayerFromSocketFd(socket->socket_fd);
@@ -152,7 +157,7 @@ int Game::GameObject::ProcessClientProtocol(Net::TcpSocket* socket, Protocol *p)
 
     if(VerifyMiddleware(p, j) == false)
     {
-        std::cout<<"Invalid Token"<<std::endl;
+        std::cout<<"Invalid Token in Authentication Middleware"<<std::endl;
         res["error"] = ErrorCode::InvalidToken;
         return C_ERR;
     }
@@ -161,7 +166,7 @@ int Game::GameObject::ProcessClientProtocol(Net::TcpSocket* socket, Protocol *p)
     {
         case ClientMsg::Login:
         {
-            Controller::Authentication controller(db_connection, redis_conn);
+            Controller::UserController controller(db_connection, redis_conn);
             res = controller.Login(j, socket->socket_fd, players);
             type = ServerMsg::LoginResponse;
             std::cout << std::setw(4) << res << '\n';
@@ -170,20 +175,16 @@ int Game::GameObject::ProcessClientProtocol(Net::TcpSocket* socket, Protocol *p)
         
         case ClientMsg::Register:
         {
-            Controller::Authentication controller(db_connection, redis_conn);
+            Controller::UserController controller(db_connection, redis_conn);
             res = controller.Register(j);
             type = ServerMsg::RegisterResponse;
             std::cout << std::setw(4) << res << '\n';
             break;
         }
         
-        /*
-            players 목록에서도 삭제
-            방목록에서도 삭제
-        */
         case ClientMsg::Logout:
         {
-            Controller::Authentication controller(db_connection, redis_conn);
+            Controller::UserController controller(db_connection, redis_conn);
             res = controller.Logout(j, players, rooms);
             type = ServerMsg::LogoutResponse;
             std::cout << std::setw(4) << res << '\n';
@@ -210,16 +211,45 @@ int Game::GameObject::ProcessClientProtocol(Net::TcpSocket* socket, Protocol *p)
 
         case ClientMsg::RoomStart:
         {
+            Controller::RoomController controller(db_connection, redis_conn);
+            res = controller.StartRoom(j, players, rooms);
+            type = ServerMsg::RoomStartResponse;
+            std::cout << std::setw(4) << res << '\n';
             break;
         }
 
         case ClientMsg::RoomExit:
         {
+            Controller::RoomController controller(db_connection, redis_conn);
+            res = controller.ExitRoom(j, players, rooms);
+            type = ServerMsg::RoomExitResponse;
+            std::cout << std::setw(4) << res << '\n';
+            break;
+        }
+
+        case ClientMsg::RoomLoad:
+        {
+            Controller::RoomController controller(db_connection, redis_conn);
+            res = controller.LoadRoom(j, rooms);
+            type = ServerMsg::RoomLoadResponse;
+            std::cout << std::setw(4) << res << '\n';
+            break;
+        }
+
+        case ClientMsg::PlayerLoad:
+        {
+            Controller::UserController controller(db_connection, redis_conn);
+            res = controller.LoadPlayer(j, players);
+            type = ServerMsg::PlayerLoadResponse;
+            std::cout << std::setw(4) << res << '\n';
             break;
         }
             
         default:
+        {
+            std::cout<<"Invalid Protocol"<<std::endl;
             return C_ERR;
+        }
     }
 
     if(socket->SendSocket(res, type) == C_ERR)
@@ -279,6 +309,15 @@ void Game::GameObject::Debug()
     rooms.Print();
 }
 
+/*
+    게임정보를 전송한다. 
+    유저의 상태에 따라 다르게 전송 
+    1. 게임중이라면 
+    -> 방의 정보를 전송한다. 만약 0이라면 해당 방은 삭제됨을 알림
+
+    2. 로비라면 
+    -> 방정보를 전송한다. 
+*/
 void Game::GameObject::SendGameState()
 {
     

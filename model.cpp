@@ -1,5 +1,17 @@
 #include "model.h"
 
+Model::DatabaseUser::DatabaseUser(uuid_t ui, int w, int l, int d, int p)
+: user_id(ui), win(w), lose(l), draw(d), point(p)
+{
+
+}
+
+Model::DatabaseUser::~DatabaseUser()
+{
+
+}
+
+
 Model::Account::Account(uuid_t user_id, 
                         std::string email, 
                         std::string password, 
@@ -18,8 +30,8 @@ Model::Account::~Account()
 
 }
 
-Model::Player::Player(uuid_t u, socket_t f, PlayerState s, std::string t)
-: user_id(u), fd(f), state(s), token(t), room_id(0)
+Model::Player::Player(uuid_t u, socket_t f, PlayerState s, std::string t, std::string n)
+: user_id(u), fd(f), state(s), token(t), room_id(0), name(n)
 {
 
 }
@@ -30,7 +42,7 @@ Model::Player::~Player()
 }
 
 Model::Room::Room(uuid_t h, RoomState rs, std::string rt, int ri)
-: host_id(h), state(rs), title(rt), room_id(ri), other_id(0)
+: host_id(h), state(rs), title(rt), room_id(ri), other_id(0), is_start(false)
 {
     
 }
@@ -50,7 +62,11 @@ Model::PlayerList::~PlayerList()
 
 }
 
-void Model::PlayerList::AppendPlayer(uuid_t user_id, socket_t fd, PlayerState state, std::string token)
+void Model::PlayerList::AppendPlayer(uuid_t user_id, 
+                                     socket_t fd, 
+                                     PlayerState state, 
+                                     std::string token, 
+                                     std::string name)
 {
     Model::Player* p = LoadPlayer(user_id);
     /* 기존 유저라면 토큰만 갱신 */
@@ -60,7 +76,7 @@ void Model::PlayerList::AppendPlayer(uuid_t user_id, socket_t fd, PlayerState st
         return;
     }
 
-    Model::Player* player = new Model::Player(user_id, fd, state, token);
+    Model::Player* player = new Model::Player(user_id, fd, state, token, name);
     players.push_back(player);
 }
 
@@ -124,6 +140,25 @@ Model::Player *Model::PlayerList::LoadPlayer(uuid_t user_id)
     }
 
     return nullptr;
+}
+
+json Model::PlayerList::LoadAllPlayers()
+{
+    json res = {
+        {"error", ErrorCode::None}
+    };
+
+    json rs;
+    for(auto p: players)
+    {
+        rs.push_back({
+            {"user_id", p->user_id}, 
+            {"name", p->name},
+            {"state", p->state},
+        });
+    }
+
+    return res;
 }
 
 void Model::PlayerList::Print()
@@ -215,6 +250,30 @@ void Model::RoomList::LogoutPlayerInRoom(uuid_t user_id, int room_id)
         room->other_id = 0;
         room->state = RoomState::RoomReady;
     }
+}
+
+json Model::RoomList::LoadAllRooms()
+{
+    json res = {
+        {"error", ErrorCode::None}
+    };
+
+    json rs;
+
+    for(auto r: rooms)
+    {
+        rs.push_back({
+            {"room_id", r->room_id},
+            {"state", r->state}, 
+            {"host_id", r->host_id}, 
+            {"other_id", r->other_id}, 
+            {"title", r->title}, 
+            {"is_start", r->is_start}, 
+        });
+    }
+    
+    res["rooms"] = rs;
+    return res;
 }
 
 void Model::RoomList::Print()

@@ -38,6 +38,8 @@ namespace Service
             PlayerService(Mysql::DB &dbc, Redis::DB &rc);
             ~PlayerService();
             ErrorCode CreatePlayer(uuid_t user_id);
+            ErrorCode UpdatePlayer(uuid_t user_id, Model::DatabaseUser *user);
+            std::tuple<ErrorCode, Model::DatabaseUser*> LoadPlayer(uuid_t user_id);
     };
 }
 

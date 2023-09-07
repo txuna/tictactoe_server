@@ -1,14 +1,14 @@
 #include "controller.h"
 #include "utility.h"
 
-Controller::Authentication::Authentication(Mysql::DB &dbc, Redis::DB &rc)
+Controller::UserController::UserController(Mysql::DB &dbc, Redis::DB &rc)
 : db_connection(dbc), redis_conn(rc)
 {
     account_service = new Service::AccountService(dbc, rc);
     player_service = new Service::PlayerService(dbc, rc);
 }
 
-Controller::Authentication::~Authentication()
+Controller::UserController::~UserController()
 {
     delete account_service;
     delete player_service;
@@ -23,7 +23,7 @@ Controller::Authentication::~Authentication()
 
     추후 Response형태로 만들어러 return 
 */
-json Controller::Authentication::Login(const json &req, socket_t fd, Model::PlayerList &players)
+json Controller::UserController::Login(const json &req, socket_t fd, Model::PlayerList &players)
 {
     json response = {
         {"error", ErrorCode::None},
@@ -72,7 +72,7 @@ json Controller::Authentication::Login(const json &req, socket_t fd, Model::Play
     response["user_id"] = account->user_id;
 
     /* 플레이어 추가 */
-    players.AppendPlayer(account->user_id, fd, PlayerState::Lobby, token);
+    players.AppendPlayer(account->user_id, fd, PlayerState::Lobby, token, account->name);
 
     delete account;
     return response;
@@ -86,7 +86,7 @@ json Controller::Authentication::Login(const json &req, socket_t fd, Model::Play
     3. insert account 
     4. check duplicate name
 */
-json Controller::Authentication::Register(const json& req)
+json Controller::UserController::Register(const json& req)
 {
     json response = {
         {"error", ErrorCode::None}
@@ -142,7 +142,7 @@ json Controller::Authentication::Register(const json& req)
 /* 해당 player가 Room에 있는지 확인 */
 /* 있다면 host인지 other인지 확인 */
 /* 게임 중인지 아닌지도 중요 */
-json Controller::Authentication::Logout(const json& req, Model::PlayerList &players, Model::RoomList &rooms)
+json Controller::UserController::Logout(const json& req, Model::PlayerList &players, Model::RoomList &rooms)
 {
     json response = {
         {"error", ErrorCode::None}
@@ -160,11 +160,27 @@ json Controller::Authentication::Logout(const json& req, Model::PlayerList &play
 
     if(player->state == PlayerState::Playing)
     {
-        // 참여중인 방 확인 및 제거 또는 방장 위임 
-        rooms.LogoutPlayerInRoom(user_id, player->room_id);
+        // 방이 게임시작중인지 확인 
+        Model::Room *room = rooms.LoadRoomFromRoomId(player->room_id);
+        if(room != nullptr)
+        {
+            if(room->is_start == true)
+            {
+                response["error"] = ErrorCode::CannotExitRoomWithPlaying;
+                return response;
+            }
+
+            rooms.LogoutPlayerInRoom(user_id, player->room_id);
+        }
     }
 
     players.DeletePlayerFromUserId(user_id);
+    return response;
+}
+
+json Controller::UserController::LoadPlayer(const json &req, Model::PlayerList &players)
+{
+    json response = players.LoadAllPlayers();
     return response;
 }
 
@@ -300,29 +316,98 @@ json Controller::RoomController::JoinRoom(const json &req, Model::PlayerList &pl
     return response;
 }
 
-json Controller::RoomController::StartRoom(const json &req)
+json Controller::RoomController::StartRoom(const json &req, Model::PlayerList &players, Model::RoomList &rooms)
 {
     json response = {
         {"error", ErrorCode::None}
     }; 
 
+    uuid_t user_id = req["user_id"];
+
+    // 플레이어가 플레이상태인지 확인 
+    Model::Player *player = players.LoadPlayer(user_id);
+    if(player == nullptr)
+    {
+        response["error"] = ErrorCode::NoneExistPlayer; 
+        return response;
+    }
+
+    if(player->state != PlayerState::Playing)
+    {
+        response["error"] = ErrorCode::PlayerIsNotInRoom;
+        return response;
+    }
+
+    // 방이 존재하는지 확인 
+    Model::Room *room = rooms.LoadRoomFromRoomId(player->room_id);
+    if(room == nullptr)
+    {
+        response["error"] = ErrorCode::NoneExistRoom;
+        return response;
+    }
+
+    // 호스트인지 확인 
+    if(user_id != room->host_id)
+    {
+        response["error"] = ErrorCode::IsNotHost;
+        return response;
+    }
+
+    // 방의 상태 확인 
+    if(room->state != RoomState::RoomPlaying)
+    {
+        response["error"] = ErrorCode::RoomIsNotFull;
+        return response;
+    }
+
+    // 방의 상태 변경 
+    room->is_start = true;
     return response;
 }
 
-json Controller::RoomController::ExitRoom(const json &req)
+json Controller::RoomController::ExitRoom(const json &req, Model::PlayerList &players, Model::RoomList &rooms)
 {
     json response = {
         {"error", ErrorCode::None}
     }; 
 
+    uuid_t user_id = req["user_id"];
+
+    // 플레이어 상태 확인
+    Model::Player *player = players.LoadPlayer(user_id);
+    if(player == nullptr)
+    {
+        response["error"] = ErrorCode::NoneExistPlayer;
+        return response;
+    }
+
+    if(player->state != PlayerState::Playing)
+    {
+        response["error"] = ErrorCode::PlayerIsNotInRoom;
+        return response;
+    }
+
+    // 방 유무 확인 
+    Model::Room *room = rooms.LoadRoomFromRoomId(player->room_id);
+    if(room == nullptr)
+    {
+        response["error"] = ErrorCode::NoneExistRoom;
+        return response;
+    }
+
+    // room.logout 시전 
+    if(room->is_start == true)
+    {
+        response["error"] = ErrorCode::CannotExitRoomWithPlaying;
+        return response;
+    }
+
+    rooms.LogoutPlayerInRoom(user_id, player->room_id);
     return response;
 }
 
-json Controller::RoomController::LoadRoom(const json &req)
+json Controller::RoomController::LoadRoom(const json &req, Model::RoomList &rooms)
 {
-    json response = {
-        {"error", ErrorCode::None}
-    }; 
-
+    json response = rooms.LoadAllRooms();
     return response;
 }

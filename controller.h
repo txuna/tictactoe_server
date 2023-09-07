@@ -26,7 +26,7 @@ namespace Controller
 
     };
     
-    class Authentication : public BaseController
+    class UserController : public BaseController
     {
         private:
             Mysql::DB &db_connection;
@@ -35,12 +35,13 @@ namespace Controller
             Service::PlayerService *player_service;
 
         public:
-            Authentication(Mysql::DB &dbc, Redis::DB &rc);
-            ~Authentication();
+            UserController(Mysql::DB &dbc, Redis::DB &rc);
+            ~UserController();
 
             json Login(const json &req, socket_t fd, Model::PlayerList &players);
             json Register(const json &req);
             json Logout(const json &req, Model::PlayerList &players, Model::RoomList &rooms);
+            json LoadPlayer(const json &req, Model::PlayerList &players);
     };
 
     class RoomController : public BaseController
@@ -56,9 +57,9 @@ namespace Controller
 
             json CreateRoom(const json &req, Model::PlayerList &players, Model::RoomList &rooms); 
             json JoinRoom(const json &req, Model::PlayerList &players, Model::RoomList &rooms);
-            json StartRoom(const json &req);
-            json ExitRoom(const json &req);
-            json LoadRoom(const json &req);
+            json StartRoom(const json &req, Model::PlayerList &players, Model::RoomList &rooms);
+            json ExitRoom(const json &req,  Model::PlayerList &players, Model::RoomList &rooms);
+            json LoadRoom(const json &req, Model::RoomList &rooms);
     };
 }
 

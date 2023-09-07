@@ -49,6 +49,7 @@ enum ServerMsg
     RoomExitResponse = 5,
     RoomJoinResponse = 6,
     RoomLoadResponse = 7,
+    PlayerLoadResponse = 8,
 };
 
 enum ClientMsg
@@ -60,7 +61,8 @@ enum ClientMsg
     RoomStart = 4,
     RoomExit = 5,
     RoomJoin = 6,
-    RoomLoad = 7
+    RoomLoad = 7,
+    PlayerLoad = 8,
 };
 
 enum ErrorCode
@@ -86,6 +88,10 @@ enum ErrorCode
     AlreadyPlaying = 204,
     AlreadyRoomPlaying = 205,
     AlreadyHost = 206,
+    CannotExitRoomWithPlaying = 207,
+    IsNotHost = 208,
+    PlayerIsNotInRoom = 209,
+    RoomIsNotFull = 210,
 };
 
 class Protocol

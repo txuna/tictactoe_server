@@ -15,7 +15,7 @@ Service::AccountService::~AccountService()
 
 std::tuple<ErrorCode, uuid_t> Service::AccountService::InsertAccount(std::string email, std::string password, std::string salt, std::string name)
 {
-    if(!db_connection.IsOpen())
+    if(db_connection.IsOpen() == false)
     {
         return std::make_tuple(ErrorCode::MysqlConnectionClose, 0);
     }
@@ -47,7 +47,7 @@ std::tuple<ErrorCode, Model::Account*> Service::AccountService::LoadAccount(std:
     std::stringstream salt; 
     std::stringstream name; 
 
-    if(!db_connection.IsOpen())
+    if(db_connection.IsOpen() == false)
     {
         return std::make_tuple(ErrorCode::MysqlConnectionClose, nullptr);
     }
@@ -88,7 +88,7 @@ std::tuple<ErrorCode, Model::Account*> Service::AccountService::LoadAccount(std:
 
 ErrorCode Service::AccountService::DeleteUser(uuid_t user_id)
 {
-    if(!db_connection.IsOpen())
+    if(db_connection.IsOpen() == false)
     {
         return ErrorCode::MysqlConnectionClose;
     }
@@ -123,7 +123,7 @@ Service::PlayerService::~PlayerService()
 //@@TODO : ErrorCode확인하고 None이 아니라면 accounts - user_id에 해당하는거 삭제
 ErrorCode Service::PlayerService::CreatePlayer(uuid_t user_id)
 {
-    if(!db_connection.IsOpen())
+    if(db_connection.IsOpen() == false)
     {
         return ErrorCode::MysqlConnectionClose;
     }
@@ -141,4 +141,75 @@ ErrorCode Service::PlayerService::CreatePlayer(uuid_t user_id)
     {
         return ErrorCode::MysqlError;
     }
+}
+
+ErrorCode Service::PlayerService::UpdatePlayer(uuid_t user_id, Model::DatabaseUser *user)
+{
+    if(db_connection.IsOpen() == false)
+    {
+        return ErrorCode::MysqlConnectionClose;
+    }
+
+    try
+    {
+        mysqlx::Table table = db_connection.GetTable("players");
+        table.update()
+        .set("win", user->win)
+        .set("lose", user->lose)
+        .set("draw", user->draw)
+        .set("point", user->point)
+        .where("user_id = :user_id")
+        .bind("user_id", user->user_id)
+        .execute();
+
+        return ErrorCode::None;
+    }
+    catch(const mysqlx::Error &err)
+    {
+        return ErrorCode::MysqlError;
+    }
+}
+
+std::tuple<ErrorCode, Model::DatabaseUser*> Service::PlayerService::LoadPlayer(uuid_t user_id)
+{
+    if(db_connection.IsOpen() == false)
+    {
+        return std::make_tuple(ErrorCode::MysqlConnectionClose, nullptr);
+    }
+
+    int win, lose, draw, point;
+
+    try
+    {
+        mysqlx::Table table = db_connection.GetTable("players");
+        mysqlx::RowResult result = table.select("user_id", "win", "lose", "draw", "point")
+        .where("user_Id = :user_id")
+        .bind("user_id", user_id).execute();
+
+        mysqlx::Row row = result.fetchOne();
+
+        if(row.isNull())
+        {
+            return std::make_tuple(ErrorCode::NoneExistPlayer, nullptr);
+        }
+
+        user_id = row[0];
+        win = row[1];
+        lose = row[2];
+        draw = row[3];
+        point = row[4];
+
+        Model::DatabaseUser *user = new Model::DatabaseUser(user_id, 
+                                                            win, 
+                                                            lose, 
+                                                            draw, 
+                                                            point);
+
+        return std::make_tuple(ErrorCode::None, user);
+    }
+    catch(const mysqlx::Error &err)
+    {
+        return std::make_tuple(ErrorCode::MysqlError, nullptr);
+    }
+    
 }
