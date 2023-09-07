@@ -21,6 +21,8 @@ Controller::UserController::~UserController()
 
     4. store user info in redis
 
+    5. 현재 플레이어목록에 포함되어있다면 막기
+
     추후 Response형태로 만들어러 return 
 */
 json Controller::UserController::Login(const json &req, socket_t fd, Model::PlayerList &players)
@@ -63,6 +65,14 @@ json Controller::UserController::Login(const json &req, socket_t fd, Model::Play
     if(n_hash != account->password)
     {
         response["error"] = ErrorCode::InvalidPassword;
+        return response;
+    }
+
+    // 이미 로그인했는지 확인
+    Model::Player *player = players.LoadPlayer(account->user_id);
+    if(player != nullptr)
+    {
+        response["error"] = ErrorCode::AlreadyLogined;
         return response;
     }
 

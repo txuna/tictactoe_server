@@ -320,5 +320,27 @@ void Game::GameObject::Debug()
 */
 void Game::GameObject::SendGameState()
 {
-    
+    for(auto player: players.players)
+    {
+        Net::TcpSocket *socket = el.LoadSocket(player->fd);
+
+        /* Lobby에 있는 참가자에게 방정보 전송 */
+        if(player->state == PlayerState::Lobby)
+        {  
+            protocol_t type = ServerMsg::RoomLoadResponse;
+            json res = rooms.LoadAllRooms();
+
+            if(socket->SendSocket(res, type) == C_ERR)
+            {
+                continue;
+            }
+        }
+
+        else if(player->state == PlayerState::Playing)
+        {
+
+        }
+    }
+
+    return;
 }

@@ -80,6 +80,7 @@ enum ErrorCode
     InvalidPassword = 102,
     AlreadyExistEmail = 103,
     NoneExistAccountInRedis = 104,
+    AlreadyLogined = 105,
 
     /* 201 ~ 300 Game */
     DuplicatedRoomTitle = 201,
