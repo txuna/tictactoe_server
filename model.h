@@ -63,6 +63,7 @@ namespace Model
             void DeletePlayerFromUserId(uuid_t user_id);
             void DeletePlayerFromSocketFd(socket_t fd);
             Player* LoadPlayer(uuid_t user_id);
+            Player* LoadPlayerFromSocketFd(socket_t fd);
             void Print();
     };
 
@@ -78,6 +79,7 @@ namespace Model
             void DeleteRoom(int room_id);
             Room* LoadRoomFromRoomId(int room_id);
             Room* LoadRoomFromTitle(std::string title);
+            void LogoutPlayerInRoom(uuid_t user_id, int room_id);
             void Print();
     };
 }

@@ -158,16 +158,15 @@ json Controller::Authentication::Logout(const json& req, Model::PlayerList &play
         return response;
     }
 
-    // host, other 둘다 한번에 확인이 가능한가? 
-
-    // 참여중인 방 확인 
-    // 호스트라면 삭제
-    
+    if(player->state == PlayerState::Playing)
+    {
+        // 참여중인 방 확인 및 제거 또는 방장 위임 
+        rooms.LogoutPlayerInRoom(user_id, player->room_id);
+    }
 
     players.DeletePlayerFromUserId(user_id);
     return response;
 }
-
 
 /*
 ==========================================================================
@@ -255,7 +254,7 @@ json Controller::RoomController::JoinRoom(const json &req, Model::PlayerList &pl
         return response;
     }
     
-    if(req["room_id"].type() != json::value_t::number_integer)
+    if(req["room_id"].type() != json::value_t::number_unsigned)
     {
         response["error"] = ErrorCode::InvalidRequest;
         return response;
@@ -296,6 +295,7 @@ json Controller::RoomController::JoinRoom(const json &req, Model::PlayerList &pl
     player->state = PlayerState::Playing;
     player->room_id = room_id;
     room->other_id = user_id;
+    room->state = RoomState::RoomPlaying;
 
     return response;
 }

@@ -94,7 +94,23 @@ void Model::PlayerList::DeletePlayerFromSocketFd(socket_t fd)
     }
 }
 
-Model::Player* Model::PlayerList::LoadPlayer(uuid_t user_id)
+Model::Player *Model::PlayerList::LoadPlayerFromSocketFd(socket_t fd)
+{
+    auto it = std::find_if(players.begin(), players.end(), 
+                        [fd](Model::Player *p){
+                            return p->fd == fd;
+                        });
+
+    if(it != players.end())
+    {
+        Model::Player *p = *it;
+        return p;
+    }
+
+    return nullptr;
+}
+
+Model::Player *Model::PlayerList::LoadPlayer(uuid_t user_id)
 {
     auto it = std::find_if(players.begin(), players.end(), 
                         [user_id](Model::Player *p){
@@ -149,7 +165,7 @@ void Model::RoomList::DeleteRoom(int room_id)
     }
 }
 
-Model::Room* Model::RoomList::LoadRoomFromTitle(std::string title)
+Model::Room *Model::RoomList::LoadRoomFromTitle(std::string title)
 {
     auto it = std::find_if(rooms.begin(), rooms.end(), 
                         [title](Model::Room *r){
@@ -165,7 +181,7 @@ Model::Room* Model::RoomList::LoadRoomFromTitle(std::string title)
     return nullptr;
 }
 
-Model::Room* Model::RoomList::LoadRoomFromRoomId(int room_id)
+Model::Room *Model::RoomList::LoadRoomFromRoomId(int room_id)
 {
     auto it = std::find_if(rooms.begin(), rooms.end(), 
                         [room_id](Model::Room *r){
@@ -179,6 +195,26 @@ Model::Room* Model::RoomList::LoadRoomFromRoomId(int room_id)
     }
 
     return nullptr;
+}
+
+void Model::RoomList::LogoutPlayerInRoom(uuid_t user_id, int room_id)
+{
+    Model::Room *room = LoadRoomFromRoomId(room_id);
+    if(room == nullptr)
+    {
+        return;
+    }
+
+    if(room->state == RoomState::RoomReady)
+    {
+        DeleteRoom(room_id);
+    }
+    else if(user_id == room->host_id)
+    {
+        room->host_id = room->other_id;
+        room->other_id = 0;
+        room->state = RoomState::RoomReady;
+    }
 }
 
 void Model::RoomList::Print()

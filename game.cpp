@@ -93,32 +93,41 @@ int Game::GameObject::ProcessAccept(Net::TcpSocket *socket, int mask)
 */
 void Game::GameObject::ProcessClientInput(Net::TcpSocket *socket, int mask)
 {
+    bool del_flag = false;
     if(mask == EPOLLIN)
     {
         Protocol *p = socket->ReadSocket();
         if(p == nullptr)
         {
-            // ROOM 정보도 삭제 - Redis에서도 지워야 하네
-            players.DeletePlayerFromSocketFd(socket->socket_fd);
-            el.DelEvent(socket);
-            return;
+            del_flag = true;
         }
-
-        if(ProcessClientProtocol(socket, p) == C_ERR)
+        else
         {
-            players.DeletePlayerFromSocketFd(socket->socket_fd);
-            el.DelEvent(socket);
-            delete p;
-            return;
-        }
+            if(ProcessClientProtocol(socket, p) == C_ERR)
+            {
+                del_flag = true;
+            }
 
-        delete p;
+            delete p;
+        }
     }
     else
     {
+        del_flag = true;
+    }
+
+    if(del_flag)
+    {
+        Model::Player* player = players.LoadPlayerFromSocketFd(socket->socket_fd);
+        if(player != nullptr)
+        {
+            if(player->state == PlayerState::Playing)
+            {
+                rooms.LogoutPlayerInRoom(player->user_id, player->room_id);
+            }
+        }
         players.DeletePlayerFromSocketFd(socket->socket_fd);
         el.DelEvent(socket);
-        return;
     }
 
     return;
