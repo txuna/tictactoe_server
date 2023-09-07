@@ -32,7 +32,7 @@ int Game::GameObject::GameLoop(Net::TcpSocket *socket)
 
         // @@TODO Send Game State All Player 
         SendGameState();
-        //Debug();
+        Debug();
     }
 
     return C_OK;
@@ -98,15 +98,15 @@ void Game::GameObject::ProcessClientInput(Net::TcpSocket *socket, int mask)
         Protocol *p = socket->ReadSocket();
         if(p == nullptr)
         {
-            // ROOM 정보도 삭제
-            DelPlayerFromSock(socket->socket_fd);
+            // ROOM 정보도 삭제 - Redis에서도 지워야 하네
+            players.DeletePlayerFromSocketFd(socket->socket_fd);
             el.DelEvent(socket);
             return;
         }
 
         if(ProcessClientProtocol(socket, p) == C_ERR)
         {
-            DelPlayerFromSock(socket->socket_fd);
+            players.DeletePlayerFromSocketFd(socket->socket_fd);
             el.DelEvent(socket);
             delete p;
             return;
@@ -116,7 +116,7 @@ void Game::GameObject::ProcessClientInput(Net::TcpSocket *socket, int mask)
     }
     else
     {
-        DelPlayerFromSock(socket->socket_fd);
+        players.DeletePlayerFromSocketFd(socket->socket_fd);
         el.DelEvent(socket);
         return;
     }
@@ -153,13 +153,7 @@ int Game::GameObject::ProcessClientProtocol(Net::TcpSocket* socket, Protocol *p)
         case ClientMsg::Login:
         {
             Controller::Authentication controller(db_connection, redis_conn);
-            res = controller.Login(j);
-
-            if(res["error"] == ErrorCode::None)
-            {
-                AddPlayer(res["user_id"], socket->socket_fd, PlayerState::Lobby);
-            }
-
+            res = controller.Login(j, socket->socket_fd, players);
             type = ServerMsg::LoginResponse;
             std::cout << std::setw(4) << res << '\n';
             break;
@@ -181,13 +175,7 @@ int Game::GameObject::ProcessClientProtocol(Net::TcpSocket* socket, Protocol *p)
         case ClientMsg::Logout:
         {
             Controller::Authentication controller(db_connection, redis_conn);
-            res = controller.Logout(j);
-
-            if(res["error"] == ErrorCode::None)
-            {
-                DelPlayer(j["user_id"]);
-            }
-
+            res = controller.Logout(j, players, rooms);
             type = ServerMsg::LogoutResponse;
             std::cout << std::setw(4) << res << '\n';
             break;
@@ -195,17 +183,8 @@ int Game::GameObject::ProcessClientProtocol(Net::TcpSocket* socket, Protocol *p)
 
         case ClientMsg::RoomCreate:
         {
-            Model::Room* room;
             Controller::RoomController controller(db_connection, redis_conn);
-            std::tie(res, room) = controller.CreateRoom(j, &room_index);
-            if(res["error"] == ErrorCode::None)
-            {
-                /* Add Room Object in rooms */
-                AddRoom(room);
-                /* set player state */
-                ChangePlayerState(j["user_id"], PlayerState::Playing);
-            }
-
+            res = controller.CreateRoom(j, players, rooms);
             type = ServerMsg::RoomCreateResponse;
             std::cout << std::setw(4) << res << '\n';
             break;
@@ -213,14 +192,8 @@ int Game::GameObject::ProcessClientProtocol(Net::TcpSocket* socket, Protocol *p)
 
         case ClientMsg::RoomJoin:
         {
-            int room_id;
             Controller::RoomController controller(db_connection, redis_conn);
-            std::tie(res, room_id) = controller.JoinRoom(j);
-            if(res["error"] == ErrorCode::None)
-            {
-                /* Append user_id in room */
-            }
-
+            res = controller.JoinRoom(j, players, rooms);
             type = ServerMsg::RoomJoinResponse;
             std::cout << std::setw(4) << res << '\n';
             break;
@@ -276,18 +249,13 @@ bool Game::GameObject::VerifyMiddleware(Protocol *p, json& j)
     std::string token = j["token"];
     uuid_t user_id = j["user_id"];
 
-    std::string str_json; 
-    ErrorCode result; 
-
-    std::tie(result, str_json) = redis_conn.LoadString(std::to_string(user_id) + "_user");
-    if(result != ErrorCode::None)
+    Model::Player *player = players.LoadPlayer(user_id);
+    if(player == nullptr)
     {
         return false;
     }
 
-    json stored_j = json::parse(str_json);
-
-    if(stored_j["token"] != j["token"])
+    if(player->token != token)
     {
         return false;
     }
@@ -295,96 +263,12 @@ bool Game::GameObject::VerifyMiddleware(Protocol *p, json& j)
     return true;
 }
 
-
-// 중복시 최근껄로 대입
-void Game::GameObject::AddPlayer(uuid_t user_id, socket_t fd, PlayerState state)
-{
-    Model::Player *p = new Model::Player(user_id, fd, state);
-
-    players.push_back(p);
-}
-
-/*
-    추후 방정보나 게임정보등에서도 배제하기
-*/
-void Game::GameObject::DelPlayer(uuid_t user_id)
-{
-    auto it = std::find_if(players.begin(), players.end(), 
-                        [user_id](Model::Player *p){
-                            return p->user_id == user_id;
-                        });
-
-    if(it != players.end())
-    {
-        Model::Player *p = *it;
-        players.erase(it);
-        delete p;
-    }
-}
-
-void Game::GameObject::DelPlayerFromSock(socket_t fd)
-{
-    auto it = std::find_if(players.begin(), players.end(), 
-                        [fd](Model::Player *p){
-                            return p->fd == fd;
-                        });
-
-    if(it != players.end())
-    {
-        Model::Player *p = *it;
-        players.erase(it);
-        delete p;
-    }
-}
-
-Model::Player *Game::GameObject::LoadPlayer(uuid_t user_id)
-{
-    auto it = std::find_if(players.begin(), players.end(), 
-                        [user_id](Model::Player *p){
-                            return p->user_id == user_id;
-                        });
-
-    if(it != players.end())
-    {
-        Model::Player *p = *it;
-        return p;
-    }
-
-    return nullptr;
-}
-
-void Game::GameObject::AddRoom(Model::Room *room)
-{
-    rooms.push_back(room);
-}
-
-void Game::GameObject::ChangePlayerState(uuid_t user_id, PlayerState state)
-{
-    auto it = std::find_if(players.begin(), players.end(), 
-                        [user_id](Model::Player *p){
-                            return p->user_id == user_id;
-                        });
-
-    if(it != players.end())
-    {
-        Model::Player *p = *it;
-        p->state = state;
-        return;
-    }   
-
-    return;
-}
-
-
 void Game::GameObject::Debug()
 {
-    std::cout<<"----------------"<<std::endl;
-    for(auto i: players)
-    {
-        std::cout<<i->user_id<<std::endl;
-    }
+    std::cout<<"--------------------------------------"<<std::endl;
+    players.Print();
+    rooms.Print();
 }
-
 
 void Game::GameObject::SendGameState()
 {

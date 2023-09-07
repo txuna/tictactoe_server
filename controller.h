@@ -9,6 +9,8 @@
 #include <string>
 #include <random>
 
+#include <vector>
+
 #include "common.h"
 #include "tmysql.h"
 #include "service.h"
@@ -36,10 +38,9 @@ namespace Controller
             Authentication(Mysql::DB &dbc, Redis::DB &rc);
             ~Authentication();
 
-            json Login(const json &req);
+            json Login(const json &req, socket_t fd, Model::PlayerList &players);
             json Register(const json &req);
-            json Logout(const json &req);
-            ErrorCode StoreUserInRedis(Model::Account *account, std::string token);
+            json Logout(const json &req, Model::PlayerList &players, Model::RoomList &rooms);
     };
 
     class RoomController : public BaseController
@@ -53,15 +54,11 @@ namespace Controller
             RoomController(Mysql::DB &dbc, Redis::DB &rc);
             ~RoomController();
 
-            std::tuple<json, Model::Room*> CreateRoom(const json &req, int *room_index); 
-            std::tuple<json, int> JoinRoom(const json &req);
+            json CreateRoom(const json &req, Model::PlayerList &players, Model::RoomList &rooms); 
+            json JoinRoom(const json &req, Model::PlayerList &players, Model::RoomList &rooms);
             json StartRoom(const json &req);
             json ExitRoom(const json &req);
             json LoadRoom(const json &req);
-            ErrorCode StoreRoomInRedis(Model::Room *room, std::string key);
-            ErrorCode ChangePlayer(uuid_t user_id, json player_j, PlayerState state);
-            std::tuple<ErrorCode, json> LoadPlayer(uuid_t user_id);
-            std::tuple<ErrorCode, json> LoadRoom(std::string title);
     };
 }
 
