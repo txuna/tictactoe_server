@@ -1,8 +1,8 @@
 #include "controller.h"
 #include "utility.h"
 
-Controllers::Controller::Controller(Mysql::DB &dbc, Redis::DB &rc, Model::PlayerList &ps, Model::RoomList &rs)
-: db_connection(dbc), redis_conn(rc), players(ps), rooms(rs)
+Controllers::Controller::Controller(Mysql::DB &dbc, Redis::DB &rc, Model::PlayerList &ps, Model::RoomList &rs, std::queue<Model::Response> &rq)
+: db_connection(dbc), redis_conn(rc), players(ps), rooms(rs), res_queue(rq)
 {
     account_service = new Service::AccountService(dbc, rc);
     player_service = new Service::PlayerService(dbc, rc);
@@ -143,8 +143,6 @@ json Controllers::Controller::Register(const json& req)
         return response;
     }
 
-    std::cout << std::setw(4) << response << '\n';
-
     return response;
 }
 
@@ -245,6 +243,7 @@ json Controllers::Controller::CreateRoom(const json &req)
     player->state = PlayerState::Playing;
     player->room_id = room->room_id;
 
+    response["room_id"] = room->room_id;
     return response;
 }
 
@@ -307,6 +306,30 @@ json Controllers::Controller::JoinRoom(const json &req)
     room->other_id = user_id;
     room->state = RoomState::RoomPlaying;
 
+    Model::Player *host_player = players.LoadPlayer(room->host_id);
+    if(host_player == nullptr)
+    {
+        response["error"] = ErrorCode::NoneExistHostPlayer;
+        return response;
+    }
+
+    /* 참여하려는 플레이어게 host의 정보를 준다. */
+    response["player"] = {
+        {"user_id", host_player->user_id}, 
+        {"name", host_player->name}
+    };
+
+    /* 호스트 플레이어에게 입장하려는 플레이어의 정보를 준다. */
+    protocol_t type = ServerMsg::PlayerJoinRoomResponse;
+    json j = {
+        {"error", ErrorCode::None}, 
+        {"player", {
+            {"user_id", user_id}, 
+            {"name", player->name}
+        }}
+    };
+
+    res_queue.push(Model::Response(host_player->fd, j, type));
     return response;
 }
 
@@ -354,6 +377,17 @@ json Controllers::Controller::StartRoom(const json &req)
         return response;
     }
 
+    // 다른 other id에게도 게임시작됨을 알림 
+    Model::Player *other_player = players.LoadPlayer(room->other_id);
+    if(other_player == nullptr)
+    {
+        response["error"] = ErrorCode::NoneExistOtherPlayer;
+        return response;
+    }
+
+    protocol_t type = ServerMsg::RoomStartResponse;
+    res_queue.push(Model::Response(other_player->fd, response, type));
+
     // 방의 상태 변경 
     room->is_start = true;
     return response;
@@ -397,6 +431,24 @@ json Controllers::Controller::ExitRoom(const json &req)
     }
 
     rooms.LogoutPlayerInRoom(user_id, player->room_id);
+
+    // host id에게 누군가가 방을 나갔음을 알림 
+    // 기존 host이든 other이 host로 바뀌었든 host_id이기에 통일
+    Model::Room *r = rooms.LoadRoomFromRoomId(player->room_id);
+    if(r != nullptr)
+    {
+        Model::Player *host_player = players.LoadPlayer(r->host_id);
+        if(host_player != nullptr)
+        {
+            json j = {
+                {"error", ErrorCode::None},
+                {"user_id", user_id}
+            };
+
+            res_queue.push(Model::Response(host_player->fd, j, ServerMsg::PlayerExitRoomResponse));
+        }
+    }
+
     return response;
 }
 

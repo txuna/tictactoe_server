@@ -285,8 +285,9 @@ void Model::RoomList::Print()
 }
 
 
-Model::Response::Response(socket_t &f, json &r)
-: fd(f), res(r)
+Model::Response::Response(socket_t f, json r, protocol_t t)
 {
-
+    fd = f;
+    res = r; 
+    type = t;
 }

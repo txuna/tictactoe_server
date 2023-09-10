@@ -3,7 +3,7 @@
 
 #include <string>
 #include <stdint.h>
-
+#include "sock.h"
 #include "common.h"
 
 namespace Model
@@ -103,10 +103,11 @@ namespace Model
     class Response
     {
         public:
-            socket_t &fd; 
-            json &res;
+            json res;
+            socket_t fd;
+            protocol_t type;
 
-            Response(socket_t &f, json &r);
+            Response(socket_t f, json r, protocol_t t);
     };
 }
 

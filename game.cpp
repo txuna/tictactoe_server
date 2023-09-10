@@ -3,7 +3,7 @@
 Game::GameObject::GameObject(Mysql::DB &dbc, Redis::DB &rc)
 : db_connection(dbc), redis_conn(rc)
 {
-    controller = new Controllers::Controller(db_connection, redis_conn, players, rooms);
+    controller = new Controllers::Controller(db_connection, redis_conn, players, rooms, res_queue);
 }
 
 Game::GameObject::~GameObject()
@@ -129,9 +129,27 @@ void Game::GameObject::ProcessClientInput(Net::TcpSocket *socket, int mask)
         Model::Player* player = players.LoadPlayerFromSocketFd(socket->socket_fd);
         if(player != nullptr)
         {
+            // 방에 있는 나머지 인원에게도 메시지 전송 필요 
             if(player->state == PlayerState::Playing)
             {
                 rooms.LogoutPlayerInRoom(player->user_id, player->room_id);
+
+                // 방이 1명이 아니라 2명이였기에 지금도 존재. 
+                Model::Room *room = rooms.LoadRoomFromRoomId(player->room_id);
+                if(room != nullptr)
+                {
+                    Model::Player *host_player = players.LoadPlayer(room->host_id);
+                    if(host_player != nullptr)
+                    {
+                        json j = {
+                            {"error", ErrorCode::None},
+                            {"user_id", room->host_id}
+                        };
+
+                        res_queue.push(Model::Response(host_player->fd, j, ServerMsg::PlayerExitRoomResponse));
+                    }
+                }
+                
             }
         }
         players.DeletePlayerFromSocketFd(socket->socket_fd);
@@ -249,11 +267,8 @@ int Game::GameObject::ProcessClientProtocol(Net::TcpSocket* socket, Protocol *p)
         }
     }
 
-    if(socket->SendSocket(res, type) == C_ERR)
-    {
-        return C_ERR;
-    }
-
+    Model::Response response(socket->socket_fd, res, type);
+    res_queue.push(response);
     return C_OK;
 }
 
@@ -321,9 +336,17 @@ void Game::GameObject::SendGameState()
     {
         Model::Response res = res_queue.front();
         
-                
+        Net::TcpSocket *socket = el.LoadSocket(res.fd);
+        if(socket != nullptr)
+        {
+            if(socket->SendSocket(res.res, res.type) == C_ERR)
+            {
+
+            }
+        }
 
         res_queue.pop();
     }
+
     return;
 }

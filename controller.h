@@ -10,6 +10,7 @@
 #include <random>
 
 #include <vector>
+#include <queue>
 
 #include "common.h"
 #include "tmysql.h"
@@ -31,9 +32,10 @@ namespace Controllers
             Service::PlayerService *player_service;
             Model::PlayerList &players; 
             Model::RoomList &rooms;
+            std::queue<Model::Response> &res_queue;
 
         public:
-            Controller(Mysql::DB &dbc, Redis::DB &rc, Model::PlayerList &ps, Model::RoomList &rs);
+            Controller(Mysql::DB &dbc, Redis::DB &rc, Model::PlayerList &ps, Model::RoomList &rs, std::queue<Model::Response> &rq);
             ~Controller();
 
             json Login(const json &req, socket_t fd);

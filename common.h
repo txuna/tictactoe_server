@@ -50,6 +50,8 @@ enum ServerMsg
     RoomJoinResponse = 6,
     RoomLoadResponse = 7,
     PlayerLoadResponse = 8,
+    PlayerJoinRoomResponse = 9,
+    PlayerExitRoomResponse = 10,
 };
 
 enum ClientMsg
@@ -93,6 +95,8 @@ enum ErrorCode
     IsNotHost = 208,
     PlayerIsNotInRoom = 209,
     RoomIsNotFull = 210,
+    NoneExistHostPlayer = 211,
+    NoneExistOtherPlayer = 212,
 };
 
 class Protocol
