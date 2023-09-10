@@ -283,3 +283,10 @@ void Model::RoomList::Print()
         std::cout<<"room_title: "<<i->title<<std::endl;
     }
 }
+
+
+Model::Response::Response(socket_t &f, json &r)
+: fd(f), res(r)
+{
+
+}

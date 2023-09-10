@@ -9,6 +9,7 @@
 #include "tredis.h"
 #include "controller.h"
 
+#include <queue>
 #include <vector>
 
 namespace Game
@@ -22,6 +23,8 @@ namespace Game
             Redis::DB &redis_conn;
             Model::PlayerList players;
             Model::RoomList rooms;
+            std::queue<Model::Response> res_queue;
+            Controllers::Controller *controller = nullptr;
 
         public:
             GameObject(Mysql::DB &dbc, Redis::DB &rc);

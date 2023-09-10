@@ -3,12 +3,16 @@
 Game::GameObject::GameObject(Mysql::DB &dbc, Redis::DB &rc)
 : db_connection(dbc), redis_conn(rc)
 {
-    
+    controller = new Controllers::Controller(db_connection, redis_conn, players, rooms);
 }
 
 Game::GameObject::~GameObject()
 {
+    delete controller;
 
+    // players 다지우기 
+
+    // rooms 다 지우기 
 }
 
 int Game::GameObject::GameLoop(Net::TcpSocket *socket)
@@ -32,7 +36,6 @@ int Game::GameObject::GameLoop(Net::TcpSocket *socket)
 
         // @@TODO Send Game State All Player 
         SendGameState();
-        Debug();
     }
 
     return C_OK;
@@ -166,8 +169,7 @@ int Game::GameObject::ProcessClientProtocol(Net::TcpSocket* socket, Protocol *p)
     {
         case ClientMsg::Login:
         {
-            Controller::UserController controller(db_connection, redis_conn);
-            res = controller.Login(j, socket->socket_fd, players);
+            res = controller->Login(j, socket->socket_fd);
             type = ServerMsg::LoginResponse;
             std::cout << std::setw(4) << res << '\n';
             break;
@@ -175,8 +177,7 @@ int Game::GameObject::ProcessClientProtocol(Net::TcpSocket* socket, Protocol *p)
         
         case ClientMsg::Register:
         {
-            Controller::UserController controller(db_connection, redis_conn);
-            res = controller.Register(j);
+            res = controller->Register(j);
             type = ServerMsg::RegisterResponse;
             std::cout << std::setw(4) << res << '\n';
             break;
@@ -184,8 +185,7 @@ int Game::GameObject::ProcessClientProtocol(Net::TcpSocket* socket, Protocol *p)
         
         case ClientMsg::Logout:
         {
-            Controller::UserController controller(db_connection, redis_conn);
-            res = controller.Logout(j, players, rooms);
+            res = controller->Logout(j);
             type = ServerMsg::LogoutResponse;
             std::cout << std::setw(4) << res << '\n';
             break;
@@ -193,8 +193,7 @@ int Game::GameObject::ProcessClientProtocol(Net::TcpSocket* socket, Protocol *p)
 
         case ClientMsg::RoomCreate:
         {
-            Controller::RoomController controller(db_connection, redis_conn);
-            res = controller.CreateRoom(j, players, rooms);
+            res = controller->CreateRoom(j);
             type = ServerMsg::RoomCreateResponse;
             std::cout << std::setw(4) << res << '\n';
             break;
@@ -202,17 +201,18 @@ int Game::GameObject::ProcessClientProtocol(Net::TcpSocket* socket, Protocol *p)
 
         case ClientMsg::RoomJoin:
         {
-            Controller::RoomController controller(db_connection, redis_conn);
-            res = controller.JoinRoom(j, players, rooms);
+            res = controller->JoinRoom(j);
             type = ServerMsg::RoomJoinResponse;
             std::cout << std::setw(4) << res << '\n';
             break;
         }
 
+        /*
+            상대방에게도 Response를 줘야함 
+        */
         case ClientMsg::RoomStart:
         {
-            Controller::RoomController controller(db_connection, redis_conn);
-            res = controller.StartRoom(j, players, rooms);
+            res = controller->StartRoom(j);
             type = ServerMsg::RoomStartResponse;
             std::cout << std::setw(4) << res << '\n';
             break;
@@ -220,8 +220,7 @@ int Game::GameObject::ProcessClientProtocol(Net::TcpSocket* socket, Protocol *p)
 
         case ClientMsg::RoomExit:
         {
-            Controller::RoomController controller(db_connection, redis_conn);
-            res = controller.ExitRoom(j, players, rooms);
+            res = controller->ExitRoom(j);
             type = ServerMsg::RoomExitResponse;
             std::cout << std::setw(4) << res << '\n';
             break;
@@ -229,8 +228,7 @@ int Game::GameObject::ProcessClientProtocol(Net::TcpSocket* socket, Protocol *p)
 
         case ClientMsg::RoomLoad:
         {
-            Controller::RoomController controller(db_connection, redis_conn);
-            res = controller.LoadRoom(j, rooms);
+            res = controller->LoadRoom(j);
             type = ServerMsg::RoomLoadResponse;
             std::cout << std::setw(4) << res << '\n';
             break;
@@ -238,8 +236,7 @@ int Game::GameObject::ProcessClientProtocol(Net::TcpSocket* socket, Protocol *p)
 
         case ClientMsg::PlayerLoad:
         {
-            Controller::UserController controller(db_connection, redis_conn);
-            res = controller.LoadPlayer(j, players);
+            res = controller->LoadPlayer(j);
             type = ServerMsg::PlayerLoadResponse;
             std::cout << std::setw(4) << res << '\n';
             break;
@@ -320,27 +317,13 @@ void Game::GameObject::Debug()
 */
 void Game::GameObject::SendGameState()
 {
-    for(auto player: players.players)
+    while(res_queue.empty() == false)
     {
-        Net::TcpSocket *socket = el.LoadSocket(player->fd);
+        Model::Response res = res_queue.front();
+        
+                
 
-        /* Lobby에 있는 참가자에게 방정보 전송 */
-        if(player->state == PlayerState::Lobby)
-        {  
-            protocol_t type = ServerMsg::RoomLoadResponse;
-            json res = rooms.LoadAllRooms();
-
-            if(socket->SendSocket(res, type) == C_ERR)
-            {
-                continue;
-            }
-        }
-
-        else if(player->state == PlayerState::Playing)
-        {
-
-        }
+        res_queue.pop();
     }
-
     return;
 }

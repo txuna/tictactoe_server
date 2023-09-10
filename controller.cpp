@@ -1,14 +1,14 @@
 #include "controller.h"
 #include "utility.h"
 
-Controller::UserController::UserController(Mysql::DB &dbc, Redis::DB &rc)
-: db_connection(dbc), redis_conn(rc)
+Controllers::Controller::Controller(Mysql::DB &dbc, Redis::DB &rc, Model::PlayerList &ps, Model::RoomList &rs)
+: db_connection(dbc), redis_conn(rc), players(ps), rooms(rs)
 {
     account_service = new Service::AccountService(dbc, rc);
     player_service = new Service::PlayerService(dbc, rc);
 }
 
-Controller::UserController::~UserController()
+Controllers::Controller::~Controller()
 {
     delete account_service;
     delete player_service;
@@ -25,7 +25,7 @@ Controller::UserController::~UserController()
 
     추후 Response형태로 만들어러 return 
 */
-json Controller::UserController::Login(const json &req, socket_t fd, Model::PlayerList &players)
+json Controllers::Controller::Login(const json &req, socket_t fd)
 {
     json response = {
         {"error", ErrorCode::None},
@@ -96,7 +96,7 @@ json Controller::UserController::Login(const json &req, socket_t fd, Model::Play
     3. insert account 
     4. check duplicate name
 */
-json Controller::UserController::Register(const json& req)
+json Controllers::Controller::Register(const json& req)
 {
     json response = {
         {"error", ErrorCode::None}
@@ -152,7 +152,7 @@ json Controller::UserController::Register(const json& req)
 /* 해당 player가 Room에 있는지 확인 */
 /* 있다면 host인지 other인지 확인 */
 /* 게임 중인지 아닌지도 중요 */
-json Controller::UserController::Logout(const json& req, Model::PlayerList &players, Model::RoomList &rooms)
+json Controllers::Controller::Logout(const json& req)
 {
     json response = {
         {"error", ErrorCode::None}
@@ -188,26 +188,10 @@ json Controller::UserController::Logout(const json& req, Model::PlayerList &play
     return response;
 }
 
-json Controller::UserController::LoadPlayer(const json &req, Model::PlayerList &players)
+json Controllers::Controller::LoadPlayer(const json &req)
 {
     json response = players.LoadAllPlayers();
     return response;
-}
-
-/*
-==========================================================================
-*/
-
-
-Controller::RoomController::RoomController(Mysql::DB &dbc, Redis::DB &rc)
-: db_connection(dbc), redis_conn(rc)
-{
-    player_service = new Service::PlayerService(dbc, rc);
-}
-
-Controller::RoomController::~RoomController()
-{
-
 }
 
 /*
@@ -215,7 +199,7 @@ Controller::RoomController::~RoomController()
     플레이어가 이미 PLAYING중인지 확인
     플레이어 상태 변경
 */
-json Controller::RoomController::CreateRoom(const json &req, Model::PlayerList &players, Model::RoomList &rooms)
+json Controllers::Controller::CreateRoom(const json &req)
 {
     ErrorCode result = ErrorCode::None;
     json response = {
@@ -266,7 +250,7 @@ json Controller::RoomController::CreateRoom(const json &req, Model::PlayerList &
 
 // 자신이 이미 방에 들어가 있는지 확인 
 // 방이 실제로 존재하며 WAITING 상태인지 확인 
-json Controller::RoomController::JoinRoom(const json &req, Model::PlayerList &players, Model::RoomList &rooms)
+json Controllers::Controller::JoinRoom(const json &req)
 {
     json response = {
         {"error", ErrorCode::None}
@@ -326,7 +310,7 @@ json Controller::RoomController::JoinRoom(const json &req, Model::PlayerList &pl
     return response;
 }
 
-json Controller::RoomController::StartRoom(const json &req, Model::PlayerList &players, Model::RoomList &rooms)
+json Controllers::Controller::StartRoom(const json &req)
 {
     json response = {
         {"error", ErrorCode::None}
@@ -375,7 +359,7 @@ json Controller::RoomController::StartRoom(const json &req, Model::PlayerList &p
     return response;
 }
 
-json Controller::RoomController::ExitRoom(const json &req, Model::PlayerList &players, Model::RoomList &rooms)
+json Controllers::Controller::ExitRoom(const json &req)
 {
     json response = {
         {"error", ErrorCode::None}
@@ -416,7 +400,7 @@ json Controller::RoomController::ExitRoom(const json &req, Model::PlayerList &pl
     return response;
 }
 
-json Controller::RoomController::LoadRoom(const json &req, Model::RoomList &rooms)
+json Controllers::Controller::LoadRoom(const json &req)
 {
     json response = rooms.LoadAllRooms();
     return response;

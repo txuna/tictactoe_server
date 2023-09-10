@@ -99,6 +99,15 @@ namespace Model
             void Print();
             json LoadAllRooms();
     };
+
+    class Response
+    {
+        public:
+            socket_t &fd; 
+            json &res;
+
+            Response(socket_t &f, json &r);
+    };
 }
 
 #endif 
