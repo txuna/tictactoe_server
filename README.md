@@ -7,6 +7,9 @@ Client : 제작예정(Unity예상)
 
 # Architecture 
 
+# Porotocol 
+Read The Protocol Document 
+[Protocol.md](./protocol.md)
 
 # Trade Off
 ### Q. 자체적인 통신 프로토콜을 제작하지 않고 nlohmann/json + msgpack을 사용한 이유?  
