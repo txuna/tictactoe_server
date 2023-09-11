@@ -178,9 +178,7 @@ response (방에 속한 모두에게 Response를 전달한다. )
     "turn_user_id" : INTEGER, /* Request를 보낸 User ID  */
     "position" : INTEGET, /* request를 보낸 user가 놓은 위치 */
     "is_fin" : BOOLEAN, /* 게임 끝났는지 */
-
-    "who_is_win" : INTEGER, /* 게임이 끝났을 때 추가되는 값  */
-
-    "who_is_turn" : INTEGER, /* 게임이 끝나지 않았을 때 다음 차례가 누구인지 */
+    "who_is_win" : INTEGER, /* 게임이 끝났을 때 추가되는 값  - DRAW_GAME 0  */
+    "who_is_turn" : INTEGER
 }
 ```

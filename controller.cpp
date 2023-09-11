@@ -333,6 +333,7 @@ json Controllers::Controller::JoinRoom(const json &req)
     return response;
 }
 
+/* 게임 시작전 방 초기화 */
 json Controllers::Controller::StartRoom(const json &req)
 {
     json response = {
@@ -394,7 +395,11 @@ json Controllers::Controller::StartRoom(const json &req)
     response["who_is_turn"] = room->host_id;
     res_queue.push(Model::Response(other_player->fd, response, ServerMsg::RoomStartResponse));
 
-    // 방의 상태 변경 
+    // 방의 상태 변경 및 초기화 
+    for(int i=0;i<9;i++)
+    {
+        room->board[i] = NONE_STONE;
+    }
     room->is_start = true;
     room->who_is_turn = room->host_id;
     return response;
@@ -534,53 +539,11 @@ json Controllers::Controller::PlayerTurn(const json &req)
         response["error"] = ErrorCode::AlreadyLocatedStone;
         return response;
     }
-
-    if(user_id == room->host_id)
+    
+    int win_type = CalculateGame(req, response, room);
+    if(win_type != NONE_STONE)
     {
-        room->board[pos] = HOST_STONE;
-    }
-    else
-    {
-        room->board[pos] = OTHER_STONE;
-    }
-
-    uuid_t win_user_id; 
-    response["turn_user_id"] = user_id;
-    response["position"] = pos;
-    response["is_fin"] = false;
-
-    /*
-        처음부터 하나의 리스폰스에 승리결과 어디에 누가 어떻게 두었는지 설정하자
-    */
-    // 승리 여부 로직 확인
-    if(room->CheckWin() == HOST_STONE)
-    {
-        win_user_id = host_player->user_id;
-        response["who_is_win"] = host_player->user_id;
-        response["is_fin"] = true;
-
-    }
-    else if(room->CheckWin() == OTHER_STONE)
-    {
-        win_user_id = other_player->user_id;
-        response["who_is_win"] = other_player->user_id;
-        response["is_fin"] = true;
-        // 승리라면 포인트 정산 및 게임 결과 리스폰스 전송
-
-    }
-    else
-    {
-        // 승리가 아니라면 다시 turn에 대한 리스폰스 전송 
-        if(room->who_is_turn == room->host_id)
-        {
-            room->who_is_turn = room->other_id;
-        }
-        else
-        {
-            room->who_is_turn = room->host_id;
-        }
-
-        response["who_is_turn"] = room->who_is_turn;
+        UpdatePlayerScore(win_type, room);
     }
 
     res_queue.push(Model::Response(other_player->fd, response, ServerMsg::PlayerTurnResponse));
@@ -592,4 +555,119 @@ json Controllers::Controller::LoadRoom(const json &req)
 {
     json response = rooms.LoadAllRooms();
     return response;
+}
+
+
+int Controllers::Controller::CalculateGame(const json &req, json &response, Model::Room *room)
+{   
+    uuid_t req_user_id = req["user_id"];
+    int pos = req["position"];
+
+    response["turn_user_id"] = req_user_id;
+    response["position"] = pos;
+    response["is_fin"] = false;
+
+    if(req_user_id == room->host_id)
+    {
+        room->board[pos] = HOST_STONE;
+        response["who_is_turn"] = room->other_id;
+    }
+    else
+    {
+        room->board[pos] = OTHER_STONE;
+        response["who_is_tuern"] = room->host_id;
+    }
+
+    int win_type = room->CheckWin();
+
+    if(win_type != NONE_STONE)
+    {
+        response["is_fin"] = true;
+        room->is_start = false;
+
+        switch (win_type)
+        {
+            case HOST_STONE:
+            {
+                response["who_is_win"] = room->host_id;
+                break;
+            }
+            case OTHER_STONE:
+            {
+                response["who_is_win"] = room->other_id;
+                break;
+            }
+            case DRAW_STONE:
+            {
+                response["who_is_win"] = DRAW_GAME;
+                break;
+            }
+        }
+    }
+
+    return win_type;
+}
+
+void Controllers::Controller::UpdatePlayerScore(int win_type, Model::Room *room)
+{
+    Model::DatabaseUser *host_user;
+    Model::DatabaseUser *other_user; 
+    ErrorCode result; 
+
+    std::tie(result, host_user) = player_service->LoadPlayer(room->host_id);
+    std::tie(result, other_user) = player_service->LoadPlayer(room->other_id);
+
+    if(result != ErrorCode::None)
+    {
+        if(host_user != nullptr)
+        {
+            delete host_user;
+        }
+
+        if(other_user != nullptr)
+        {
+            delete other_user;
+        }
+
+        return;
+    }
+
+    if(win_type == DRAW_STONE)
+    {
+        host_user->draw += 1;
+        host_user->point += DRAW_POINT;
+        other_user->draw += 1; 
+        other_user->point += DRAW_POINT;
+    }
+
+    else if(win_type == HOST_STONE || win_type == OTHER_STONE)
+    {
+        Model::DatabaseUser *win_user, *lose_user;
+        
+        if(win_type == HOST_STONE)
+        {
+            win_user = host_user;
+            lose_user = other_user;
+        }
+
+        else if(win_type == OTHER_STONE)
+        {
+            win_user = other_user;
+            lose_user = host_user;
+        }
+
+        win_user->win += 1;
+        win_user->point += WIN_POINT;
+
+        lose_user->lose += 1;
+
+        if(lose_user->point - LOSE_POINT < 0)
+        {
+            lose_user->point = 0;
+        }
+        else
+        {
+            lose_user->point -= LOSE_POINT;
+        }
+    }
 }

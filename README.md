@@ -8,7 +8,7 @@ Client : 제작예정(Unity예상)
 # Architecture 
 
 # Porotocol 
-Read The Protocol Document 
+Read The Protocol Document   
 [Protocol.md](./protocol.md)
 
 # Trade Off

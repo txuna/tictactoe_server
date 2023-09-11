@@ -48,6 +48,10 @@ namespace Controllers
             json ExitRoom(const json &InvalidRequest);
             json LoadRoom(const json &req);
             json PlayerTurn(const json &req);
+
+
+            int CalculateGame(const json &req, json &response, Model::Room *room);
+            void UpdatePlayerScore(int win_type, Model::Room *room);
     };
 }
 

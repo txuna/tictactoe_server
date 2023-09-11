@@ -54,42 +54,52 @@ int Model::Room::CheckWin()
         return board[0];
     }
 
-    if(board[3] == board[4] == board[5] != NONE_STONE)
+    else if(board[3] == board[4] == board[5] != NONE_STONE)
     {
         return board[3];
     }
 
-    if(board[6] == board[7] == board[8] != NONE_STONE)
+    else if(board[6] == board[7] == board[8] != NONE_STONE)
     {
         return board[6];
     }
 
-    if(board[0] == board[3] == board[6] != NONE_STONE)
+    else if(board[0] == board[3] == board[6] != NONE_STONE)
     {
         return board[0];
     }
 
-    if(board[1] == board[4] == board[7] != NONE_STONE)
+    else if(board[1] == board[4] == board[7] != NONE_STONE)
     {
         return board[1];
     }
 
-    if(board[2] == board[5] == board[8] != NONE_STONE)
+    else if(board[2] == board[5] == board[8] != NONE_STONE)
     {
         return board[2];
     }
 
-    if(board[0] == board[4] == board[8] != NONE_STONE)
+    else if(board[0] == board[4] == board[8] != NONE_STONE)
     {
         return board[0];
     }
 
-    if(board[2] == board[4] == board[6] != NONE_STONE)
+    else if(board[2] == board[4] == board[6] != NONE_STONE)
     {
         return board[2];
     }
-
-    return 0;
+    else
+    {
+        // 비겼는지 확인 
+        for(int i=0;i<9;i++)
+        {
+            if(board[i] == NONE_STONE)
+            {
+                return NONE_STONE;
+            }
+        }
+    }
+    return DRAW_STONE;
 }
 
 Model::Room::~Room()

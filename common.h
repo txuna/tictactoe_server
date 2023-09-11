@@ -30,6 +30,13 @@ using namespace nlohmann::literals;
 #define NONE_STONE 0
 #define HOST_STONE 1
 #define OTHER_STONE 2
+#define DRAW_STONE -1
+
+#define WIN_POINT 50
+#define LOSE_POINT 15
+#define DRAW_POINT 5
+
+#define DRAW_GAME 0
 
 enum PlayerState
 {
