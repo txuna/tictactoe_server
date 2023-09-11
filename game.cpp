@@ -259,6 +259,14 @@ int Game::GameObject::ProcessClientProtocol(Net::TcpSocket* socket, Protocol *p)
             std::cout << std::setw(4) << res << '\n';
             break;
         }
+
+        case ClientMsg::PlayerTurn:
+        {
+            res = controller->PlayerTurn(j);
+            type = ServerMsg::PlayerTurnResponse;
+            std::cout << std::setw(4) << res << '\n';
+            break;
+        }
             
         default:
         {

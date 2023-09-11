@@ -61,9 +61,13 @@ namespace Model
             int state;
             std::string title;
             int room_id;
+            uuid_t who_is_turn;
+            /* 0 : blank, 1 : host player, 2 : other player */
+            int board[9] = {0};
 
             Room(uuid_t h, RoomState rs, std::string rt, int ri);
             ~Room();
+            int CheckWin();
     };
 
     class PlayerList

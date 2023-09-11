@@ -42,9 +42,54 @@ Model::Player::~Player()
 }
 
 Model::Room::Room(uuid_t h, RoomState rs, std::string rt, int ri)
-: host_id(h), state(rs), title(rt), room_id(ri), other_id(0), is_start(false)
+: host_id(h), state(rs), title(rt), room_id(ri), other_id(0), is_start(false), who_is_turn(0)
 {
     
+}
+
+int Model::Room::CheckWin()
+{
+    if(board[0] == board[1] == board[2] != NONE_STONE)
+    {
+        return board[0];
+    }
+
+    if(board[3] == board[4] == board[5] != NONE_STONE)
+    {
+        return board[3];
+    }
+
+    if(board[6] == board[7] == board[8] != NONE_STONE)
+    {
+        return board[6];
+    }
+
+    if(board[0] == board[3] == board[6] != NONE_STONE)
+    {
+        return board[0];
+    }
+
+    if(board[1] == board[4] == board[7] != NONE_STONE)
+    {
+        return board[1];
+    }
+
+    if(board[2] == board[5] == board[8] != NONE_STONE)
+    {
+        return board[2];
+    }
+
+    if(board[0] == board[4] == board[8] != NONE_STONE)
+    {
+        return board[0];
+    }
+
+    if(board[2] == board[4] == board[6] != NONE_STONE)
+    {
+        return board[2];
+    }
+
+    return 0;
 }
 
 Model::Room::~Room()

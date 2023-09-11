@@ -282,7 +282,7 @@ json Controllers::Controller::JoinRoom(const json &req)
     // 방의 상태 확인
     if(room->state == RoomState::RoomPlaying)
     {
-        response["error"] = ErrorCode::AlreadyRoomPlaying;
+        response["error"] = ErrorCode::RoomIsFull;
         return response;
     }
 
@@ -370,10 +370,16 @@ json Controllers::Controller::StartRoom(const json &req)
         return response;
     }
 
-    // 방의 상태 확인 
+    // 방의 상태 확인
     if(room->state != RoomState::RoomPlaying)
     {
         response["error"] = ErrorCode::RoomIsNotFull;
+        return response;
+    }
+
+    if(room->is_start == true)
+    {
+        response["error"] = ErrorCode::AlreadyRoomPlaying;
         return response;
     }
 
@@ -384,12 +390,13 @@ json Controllers::Controller::StartRoom(const json &req)
         response["error"] = ErrorCode::NoneExistOtherPlayer;
         return response;
     }
-
-    protocol_t type = ServerMsg::RoomStartResponse;
-    res_queue.push(Model::Response(other_player->fd, response, type));
+    
+    response["who_is_turn"] = room->host_id;
+    res_queue.push(Model::Response(other_player->fd, response, ServerMsg::RoomStartResponse));
 
     // 방의 상태 변경 
     room->is_start = true;
+    room->who_is_turn = room->host_id;
     return response;
 }
 
@@ -449,6 +456,135 @@ json Controllers::Controller::ExitRoom(const json &req)
         }
     }
 
+    return response;
+}
+
+json Controllers::Controller::PlayerTurn(const json &req)
+{
+    json response = {
+        {"error", ErrorCode::None}
+    };
+
+    if(req.contains("position") == false)
+    {
+        response["error"] = ErrorCode::InvalidRequest;
+        return response;
+    }
+
+    if(req["position"].type() == json::value_t::number_unsigned)
+    {
+        response["error"] = ErrorCode::InvalidRequest;
+        return response;
+    }
+
+    uuid_t user_id = req["user_id"];
+    int pos = req["position"]; 
+
+    if(pos < 0 && pos > 8)
+    {
+        response["error"] = ErrorCode::InvalidRequest;
+        return response;
+    }
+
+    // 현재 플레이어 및 
+    Model::Player *host_player = players.LoadPlayer(user_id);
+    if(host_player == nullptr)
+    {
+        response["error"] = ErrorCode::NoneExistPlayer;
+        return response;
+    }
+
+    if(host_player->state != PlayerState::Playing)
+    {
+        response["error"] = ErrorCode::PlayerIsNotInRoom;
+        return response;
+    }
+
+    Model::Room *room = rooms.LoadRoomFromRoomId(host_player->room_id);
+    if(room == nullptr)
+    {
+        response["error"] = ErrorCode::NoneExistRoom;
+        return response;
+    }
+
+    // 방 상태 확인
+    if(room->state != RoomState::RoomPlaying || room->is_start == false)
+    {
+        response["error"] = ErrorCode::RoomIsNotStart;
+        return response;
+    }
+
+    Model::Player *other_player = players.LoadPlayer(room->other_id);
+    if(other_player == nullptr)
+    {
+        response["error"] = ErrorCode::NoneExistOtherPlayer;
+        return response;
+    }
+
+    // 플레이어의 턴이 맞는지 확인 
+    if(user_id == room->who_is_turn)
+    {
+        response["error"] = ErrorCode::IsNotYourTurn;
+        return response;
+    }
+
+    // 게임판 3x3 배열에 원하는 위치 기입
+    if(room->board[pos] != 0)
+    {
+        response["error"] = ErrorCode::AlreadyLocatedStone;
+        return response;
+    }
+
+    if(user_id == room->host_id)
+    {
+        room->board[pos] = HOST_STONE;
+    }
+    else
+    {
+        room->board[pos] = OTHER_STONE;
+    }
+
+    uuid_t win_user_id; 
+    response["turn_user_id"] = user_id;
+    response["position"] = pos;
+    response["is_fin"] = false;
+
+    /*
+        처음부터 하나의 리스폰스에 승리결과 어디에 누가 어떻게 두었는지 설정하자
+    */
+    // 승리 여부 로직 확인
+    if(room->CheckWin() == HOST_STONE)
+    {
+        win_user_id = host_player->user_id;
+        response["who_is_win"] = host_player->user_id;
+        response["is_fin"] = true;
+
+    }
+    else if(room->CheckWin() == OTHER_STONE)
+    {
+        win_user_id = other_player->user_id;
+        response["who_is_win"] = other_player->user_id;
+        response["is_fin"] = true;
+        // 승리라면 포인트 정산 및 게임 결과 리스폰스 전송
+
+    }
+    else
+    {
+        // 승리가 아니라면 다시 turn에 대한 리스폰스 전송 
+        if(room->who_is_turn == room->host_id)
+        {
+            room->who_is_turn = room->other_id;
+        }
+        else
+        {
+            room->who_is_turn = room->host_id;
+        }
+
+        response["who_is_turn"] = room->who_is_turn;
+    }
+
+    res_queue.push(Model::Response(other_player->fd, response, ServerMsg::PlayerTurnResponse));
+    
     return response;
 }
 

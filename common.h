@@ -27,6 +27,10 @@ using namespace nlohmann::literals;
 #define C_ERR -1
 #define C_YET -2
 
+#define NONE_STONE 0
+#define HOST_STONE 1
+#define OTHER_STONE 2
+
 enum PlayerState
 {
     Lobby = 0,
@@ -52,6 +56,8 @@ enum ServerMsg
     PlayerLoadResponse = 8,
     PlayerJoinRoomResponse = 9,
     PlayerExitRoomResponse = 10,
+    WhoIsTurnResponse = 11,
+    PlayerTurnResponse = 12,
 };
 
 enum ClientMsg
@@ -65,6 +71,7 @@ enum ClientMsg
     RoomJoin = 6,
     RoomLoad = 7,
     PlayerLoad = 8,
+    PlayerTurn = 9,
 };
 
 enum ErrorCode
@@ -89,14 +96,19 @@ enum ErrorCode
     NoneExistRoom = 202,
     NoneExistPlayer = 203,
     AlreadyPlaying = 204,
-    AlreadyRoomPlaying = 205,
+    RoomIsFull = 205,
     AlreadyHost = 206,
     CannotExitRoomWithPlaying = 207,
     IsNotHost = 208,
     PlayerIsNotInRoom = 209,
-    RoomIsNotFull = 210,
+    RoomIsNotStart = 210,
     NoneExistHostPlayer = 211,
     NoneExistOtherPlayer = 212,
+    RoomIsNotFull = 213,
+    IsNotYourTurn = 214,
+    AlreadyRoomPlaying = 215,
+
+    AlreadyLocatedStone = 216,
 };
 
 class Protocol

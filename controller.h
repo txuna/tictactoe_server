@@ -47,6 +47,7 @@ namespace Controllers
             json StartRoom(const json &req);
             json ExitRoom(const json &InvalidRequest);
             json LoadRoom(const json &req);
+            json PlayerTurn(const json &req);
     };
 }
 
