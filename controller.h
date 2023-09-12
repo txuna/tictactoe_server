@@ -41,7 +41,7 @@ namespace Controllers
             json Login(const json &req, socket_t fd);
             json Register(const json &req);
             json Logout(const json &req);
-            json LoadPlayer(const json &req);
+            json LoadPlayerInfo(const json &req);
             json CreateRoom(const json &req); 
             json JoinRoom(const json &req);
             json StartRoom(const json &req);

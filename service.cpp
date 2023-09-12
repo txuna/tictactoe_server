@@ -86,6 +86,53 @@ std::tuple<ErrorCode, Model::Account*> Service::AccountService::LoadAccount(std:
     }
 }
 
+std::tuple<ErrorCode, Model::Account*> Service::AccountService::LoadAccountFromUserId(uuid_t req_user_id)
+{
+    uuid_t user_id;
+    std::stringstream email; 
+    std::stringstream password;
+    std::stringstream salt; 
+    std::stringstream name; 
+
+    if(db_connection.IsOpen() == false)
+    {
+        return std::make_tuple(ErrorCode::MysqlConnectionClose, nullptr);
+    }
+
+    try
+    {
+        mysqlx::Table table = db_connection.GetTable("accounts");
+        mysqlx::RowResult result = table.select("user_id", "email", "password", "salt", "name")
+        .where("user_id = :req_user_id")
+        .bind("req_user_id", user_id).execute();
+
+        mysqlx::Row row = result.fetchOne();
+
+        if(row.isNull())
+        {
+            return std::make_tuple(ErrorCode::NoneExistAccount, nullptr);
+        }
+
+        user_id = row[0];
+        email << row[1];
+        password << row[2];
+        salt << row[3];
+        name << row[4];
+
+        Model::Account *account = new Model::Account(user_id, 
+                                                    email.str(), 
+                                                    password.str(), 
+                                                    salt.str(), 
+                                                    name.str());
+
+        return std::make_tuple(ErrorCode::None, account);
+    }
+    catch(const mysqlx::Error &err)
+    {
+        return std::make_tuple(ErrorCode::MysqlError, nullptr);
+    }
+}
+
 ErrorCode Service::AccountService::DeleteUser(uuid_t user_id)
 {
     if(db_connection.IsOpen() == false)

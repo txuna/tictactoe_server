@@ -251,7 +251,7 @@ int Game::GameObject::ProcessClientProtocol(Net::TcpSocket* socket, Protocol *p)
 
         case ClientMsg::PlayerLoad:
         {
-            res = controller->LoadPlayer(j);
+            res = controller->LoadPlayerInfo(j);
             type = ServerMsg::PlayerLoadResponse;
             std::cout << std::setw(4) << res << '\n';
             break;

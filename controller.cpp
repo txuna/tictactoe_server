@@ -186,9 +186,42 @@ json Controllers::Controller::Logout(const json& req)
     return response;
 }
 
-json Controllers::Controller::LoadPlayer(const json &req)
+json Controllers::Controller::LoadPlayerInfo(const json &req)
 {
-    json response = players.LoadAllPlayers();
+    json response = {
+        {"error", ErrorCode::None}
+    };
+
+    uuid_t user_id = req["user_id"];
+
+    Model::Account *account;
+    Model::DatabaseUser *user;
+    ErrorCode result; 
+    std::tie(result, user) = player_service->LoadPlayer(user_id);
+    if(result != ErrorCode::None)
+    {
+        response["error"] = result; 
+        return response;
+    }
+    
+    std::tie(result, account) = account_service->LoadAccountFromUserId(user_id);
+    if(result != ErrorCode::None)
+    {
+        response["error"] = result;
+        delete user;
+        return response;
+    }
+
+    response["email"] = account->email; 
+    response["name"] = account->name;
+    response["win"] = user->win;            
+    response["draw"] = user->draw;
+    response["lose"] = user->lose; 
+    response["point"] = user->point;
+
+    delete account; 
+    delete user;
+
     return response;
 }
 
@@ -670,4 +703,11 @@ void Controllers::Controller::UpdatePlayerScore(int win_type, Model::Room *room)
             lose_user->point -= LOSE_POINT;
         }
     }
+
+    result = player_service->UpdatePlayer(host_user->user_id, host_user);
+    result = player_service->UpdatePlayer(other_user->user_id, other_user);
+
+    delete host_user; 
+    delete other_user;
+    return;
 }

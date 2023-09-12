@@ -19,6 +19,7 @@ namespace Service
         public:
             AccountService(Mysql::DB &dbc, Redis::DB &rc);
             ~AccountService();
+            std::tuple<ErrorCode, Model::Account*> LoadAccountFromUserId(uuid_t req_user_id);
             std::tuple<ErrorCode, Model::Account*> LoadAccount(std::string req_email);
             std::tuple<ErrorCode, uuid_t> InsertAccount(std::string email, 
                                     std::string password, 
