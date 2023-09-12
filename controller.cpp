@@ -643,7 +643,7 @@ void Controllers::Controller::UpdatePlayerScore(int win_type, Model::Room *room)
     else if(win_type == HOST_STONE || win_type == OTHER_STONE)
     {
         Model::DatabaseUser *win_user, *lose_user;
-        
+
         if(win_type == HOST_STONE)
         {
             win_user = host_user;

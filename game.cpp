@@ -166,7 +166,7 @@ int Game::GameObject::ProcessClientProtocol(Net::TcpSocket* socket, Protocol *p)
 {
     int err;
     json j = p->ProcessingMsg(&err);
-    
+
     if(err == 1)
     {
         std::cout<<"Parsing Error"<<std::endl;
@@ -225,9 +225,6 @@ int Game::GameObject::ProcessClientProtocol(Net::TcpSocket* socket, Protocol *p)
             break;
         }
 
-        /*
-            상대방에게도 Response를 줘야함 
-        */
         case ClientMsg::RoomStart:
         {
             res = controller->StartRoom(j);

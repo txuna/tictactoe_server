@@ -45,7 +45,7 @@ namespace Controllers
             json CreateRoom(const json &req); 
             json JoinRoom(const json &req);
             json StartRoom(const json &req);
-            json ExitRoom(const json &InvalidRequest);
+            json ExitRoom(const json &req);
             json LoadRoom(const json &req);
             json PlayerTurn(const json &req);
 

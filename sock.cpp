@@ -196,6 +196,7 @@ int Net::TcpSocket::SendSocket(json& j, protocol_t p)
     return C_OK;
 }
 
+
 Net::TcpSocket::~TcpSocket()
 {
     if(socket_fd != -1)

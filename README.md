@@ -27,6 +27,41 @@ json 특성상 자체적인 통신 프로토콜을 만드는 것보다 크기가
 3. [openssl 3.0(up)](https://github.com/openssl/openssl)  
 4. [hiredis](https://github.com/redis/hiredis)   
 
+
+# Dependency Install
+```
+# Install Redis 
+sudo apt install redis
+
+# Install mysql-server
+sudo apt install mysql-server
+
+# Install Mysql CPP Connector - header file 
+wget https://dev.mysql.com/get/Downloads/Connector-C++/libmysqlcppconn-dev_8.1.0-1ubuntu22.04_amd64.deb
+sudo dpkg -i libmysqlcppconn-dev_8.1.0-1ubuntu22.04_amd64.deb
+
+# Install Mysql CPP Connector - library (link)
+wget https://dev.mysql.com/get/Downloads/Connector-C++/libmysqlcppconn8-2_8.1.0-1ubuntu22.04_amd64.deb
+sudo dpkg -i libmysqlcppconn8-2_8.1.0-1ubuntu22.04_amd64.deb
+
+# mysql 의존성 문제 해결 패키지1
+wget https://dev.mysql.com/get/Downloads/Connector-C++/libmysqlcppconn9_8.1.0-1ubuntu22.04_amd64.deb
+sudo dpkg -i libmysqlcppconn9_8.1.0-1ubuntu22.04_amd64.deb
+
+# mysql 의존성 문제 해결 패키지2
+wget https://dev.mysql.com/get/Downloads/MySQL-8.1/mysql-community-client-plugins_8.1.0-1ubuntu22.04_amd64.deb
+sudo dpkg -i mysql-community-client-plugins_8.1.0-1ubuntu22.04_amd64.deb
+
+# redis-c 라이브러리 설치 
+git clone https://github.com/redis/hiredis.git
+cd hiredis
+make 
+sudo make install 
+
+# openssl 라이브러리 설치
+sudo apt install libssl-dev
+```
+
 # Compile 
 ```
 git clone https://github.com/txuna/tictactoe_server.git
