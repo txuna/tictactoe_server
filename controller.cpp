@@ -646,22 +646,17 @@ void Controllers::Controller::UpdatePlayerScore(int win_type, Model::Room *room)
     Model::DatabaseUser *host_user;
     Model::DatabaseUser *other_user; 
     ErrorCode result; 
-
-    std::tie(result, host_user) = player_service->LoadPlayer(room->host_id);
-    std::tie(result, other_user) = player_service->LoadPlayer(room->other_id);
-
-    if(result != ErrorCode::None)
+    
+    host_user = LoadUser(room->host_id);
+    if(host_user == nullptr)
     {
-        if(host_user != nullptr)
-        {
-            delete host_user;
-        }
+        return;
+    }
 
-        if(other_user != nullptr)
-        {
-            delete other_user;
-        }
-
+    other_user = LoadUser(room->other_id);
+    if(other_user == nullptr)
+    {
+        delete host_user;
         return;
     }
 
@@ -704,10 +699,42 @@ void Controllers::Controller::UpdatePlayerScore(int win_type, Model::Room *room)
         }
     }
 
-    result = player_service->UpdatePlayer(host_user->user_id, host_user);
-    result = player_service->UpdatePlayer(other_user->user_id, other_user);
+    UpdatePlayer(host_user);
+    UpdatePlayer(other_user);
 
     delete host_user; 
     delete other_user;
+
     return;
+}
+
+
+void Controllers::Controller::UpdatePlayer(Model::DatabaseUser *user)
+{
+    if(user == nullptr)
+    {
+        return;
+    }
+
+    ErrorCode result = player_service->UpdatePlayer(user->user_id, user);
+    if(result != ErrorCode::None)
+    {
+        /* Logging! */
+    }
+
+    return;
+}
+
+Model::DatabaseUser *Controllers::Controller::LoadUser(uuid_t user_id)
+{
+    ErrorCode result; 
+    Model::DatabaseUser *user;
+    std::tie(result, user) = player_service->LoadPlayer(user_id);
+
+    if(result != ErrorCode::None)
+    {
+        return nullptr;
+    }
+
+    return user;
 }

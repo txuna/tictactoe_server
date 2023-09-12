@@ -122,36 +122,12 @@ void Game::GameObject::ProcessClientInput(Net::TcpSocket *socket, int mask)
     /*
         is_start
         현재 게임중일 경우 해당 유저가 host인지 other인지 확인하고 반대편 사람에게 승리했음을 알려주기
-        아니면 여기서 포인트 정산?
+        게임중에 나갔다면 어떻게? 
     */
     if(del_flag)
     {
-        Model::Player* player = players.LoadPlayerFromSocketFd(socket->socket_fd);
-        if(player != nullptr)
-        {
-            // 방에 있는 나머지 인원에게도 메시지 전송 필요 
-            if(player->state == PlayerState::Playing)
-            {
-                rooms.LogoutPlayerInRoom(player->user_id, player->room_id);
+        ExitPlayerInPlaying(socket);
 
-                // 방이 1명이 아니라 2명이였기에 지금도 존재. 
-                Model::Room *room = rooms.LoadRoomFromRoomId(player->room_id);
-                if(room != nullptr)
-                {
-                    Model::Player *host_player = players.LoadPlayer(room->host_id);
-                    if(host_player != nullptr)
-                    {
-                        json j = {
-                            {"error", ErrorCode::None},
-                            {"user_id", room->host_id}
-                        };
-
-                        res_queue.push(Model::Response(host_player->fd, j, ServerMsg::PlayerExitRoomResponse));
-                    }
-                }
-                
-            }
-        }
         players.DeletePlayerFromSocketFd(socket->socket_fd);
         el.DelEvent(socket);
     }
@@ -351,6 +327,87 @@ void Game::GameObject::SendGameState()
         }
 
         res_queue.pop();
+    }
+
+    return;
+}
+
+void Game::GameObject::ExitPlayerInPlaying(Net::TcpSocket *socket)
+{
+    Model::Room *room = nullptr;
+    Model::Player *exit_player = players.LoadPlayerFromSocketFd(socket->socket_fd);
+    Model::Player *other_player = nullptr;
+
+    if(exit_player == nullptr)
+    {
+        return;   
+    }
+
+    if(exit_player->state != PlayerState::Playing)
+    {
+        return;
+    }
+
+    room = rooms.LoadRoomFromRoomId(exit_player->room_id);
+    if(room == nullptr)
+    {
+        return;
+    }
+
+    if(room->state == RoomState::RoomPlaying)
+    {
+        /* 나간 플레이어가 호스트라면 */
+        if(exit_player->user_id == room->host_id)
+        {
+            other_player = players.LoadPlayer(room->other_id);
+        }
+        else
+        {
+            other_player = players.LoadPlayer(room->host_id);
+        }
+    }
+
+    // 게임이 진행중일 때 나갈 시 포인트 정산
+    if(room->is_start == true && other_player != nullptr)
+    {
+        Model::DatabaseUser *exit_user = controller->LoadUser(exit_player->user_id);
+        Model::DatabaseUser *other_user = controller->LoadUser(other_player->user_id);
+
+        if(exit_user != nullptr && other_user != nullptr)
+        {
+            exit_user->lose += 1;
+            if(exit_user->point - LOSE_POINT < 0)
+            {
+                exit_user->point = 0;
+            }
+            else
+            {
+                exit_user->point -= LOSE_POINT;
+            }
+            other_user->win += 1;
+            other_user->point += WIN_POINT;
+
+            controller->UpdatePlayer(exit_user);
+            controller->UpdatePlayer(other_user);
+        }
+
+        delete exit_user; 
+        delete other_user;
+    }
+
+    rooms.LogoutPlayerInRoom(exit_player->user_id, room->room_id);
+
+    /* 참여하고 있는 다른플레이어에게 다른 플레이어가 나갔음을 알림 */
+    if(other_player != nullptr)
+    {
+        bool is_host = room->host_id == other_player->user_id ? true : false;
+        json j = {
+            {"error", ErrorCode::None}, 
+            {"user_id", exit_player->user_id},
+            {"is_host", is_host}
+        };
+
+        res_queue.push(Model::Response(other_player->fd, j, ServerMsg::PlayerExitRoomResponse));
     }
 
     return;

@@ -125,12 +125,12 @@ response (방에 참가하는 또 다른 사람이 존재할시)
 ```
 
 ### PlayerExitRoomResponse
-(방에 참가하고 있는 다른 사람이 나갈 시 현재 방에 참가하고 있는 이에게 전송)
-response
+response(방에 참가하고 있는 다른 사람이 나갈 시 현재 방에 참가하고 있는 이에게 전송) 
 ```
 {
     "error" : INTEGER, 
-    "user_id" : INTEGER
+    "user_id" : INTEGER,
+    "is_host" : BOOLEAN #기존 플레이어가 나갔을 시 자신이 호스트가 되었는지 아니였는지 확인
 }
 ```
 

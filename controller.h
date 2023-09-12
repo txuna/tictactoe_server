@@ -52,6 +52,9 @@ namespace Controllers
 
             int CalculateGame(const json &req, json &response, Model::Room *room);
             void UpdatePlayerScore(int win_type, Model::Room *room);
+            
+            void UpdatePlayer(Model::DatabaseUser *user);
+            Model::DatabaseUser *LoadUser(uuid_t user_id);
     };
 }
 

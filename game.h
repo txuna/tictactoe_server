@@ -37,6 +37,7 @@ namespace Game
             void SendGameState();
             bool VerifyMiddleware(Protocol *p, json& j);
 
+            void ExitPlayerInPlaying(Net::TcpSocket *socket);
             void Debug();
     };
 }
