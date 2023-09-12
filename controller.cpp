@@ -1,6 +1,8 @@
 #include "controller.h"
 #include "utility.h"
 
+const std::regex email_pattern("(\\w+)(\\.|_)?(\\w*)@(\\w+)(\\.(\\w+))+");
+
 Controllers::Controller::Controller(Mysql::DB &dbc, Redis::DB &rc, Model::PlayerList &ps, Model::RoomList &rs, std::queue<Model::Response> &rq)
 : db_connection(dbc), redis_conn(rc), players(ps), rooms(rs), res_queue(rq)
 {
@@ -50,6 +52,12 @@ json Controllers::Controller::Login(const json &req, socket_t fd)
     std::string email = req["email"];
     std::string password = req["password"];
     std::string token;
+
+    if(std::regex_match(email, email_pattern) == false)
+    {
+        response["error"] = ErrorCode::InvalidRequest;
+        return response;
+    }
     
     Model::Account *account;
     ErrorCode result;
@@ -123,6 +131,12 @@ json Controllers::Controller::Register(const json& req)
     std::string name = req["name"];
     std::string salt = Utility::Security::GenerateSalt(24);
     std::string hash = Utility::Security::GenerateHash(password, salt);
+
+    if(std::regex_match(email, email_pattern) == false)
+    {
+        response["error"] = ErrorCode::InvalidRequest;
+        return response;
+    }
 
     ErrorCode result;
     uuid_t user_id; 

@@ -11,6 +11,7 @@
 
 #include <vector>
 #include <queue>
+#include <regex>
 
 #include "common.h"
 #include "tmysql.h"
