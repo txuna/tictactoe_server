@@ -304,6 +304,7 @@ void Model::RoomList::LogoutPlayerInRoom(uuid_t user_id, int room_id)
         room->host_id = room->other_id;
         room->other_id = 0;
         room->state = RoomState::RoomReady;
+        room->is_start = false;
     }
 }
 

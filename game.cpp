@@ -405,6 +405,11 @@ void Game::GameObject::ExitPlayerInPlaying(Net::TcpSocket *socket)
         delete other_user;
     }
 
+    if(room->is_start == true)
+    {
+        room->is_start = false;
+    }
+
     rooms.LogoutPlayerInRoom(exit_player->user_id, room->room_id);
 
     /* 참여하고 있는 다른플레이어에게 다른 플레이어가 나갔음을 알림 */

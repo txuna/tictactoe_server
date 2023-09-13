@@ -32,9 +32,9 @@ using namespace nlohmann::literals;
 #define OTHER_STONE 2
 #define DRAW_STONE -1
 
-#define WIN_POINT 50
-#define LOSE_POINT 15
-#define DRAW_POINT 5
+#define WIN_POINT 10
+#define LOSE_POINT 3
+#define DRAW_POINT 1
 
 #define DRAW_GAME 0
 
