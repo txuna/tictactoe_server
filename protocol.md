@@ -54,8 +54,6 @@ request
     "min_point" : INTEGER, 
     "max_point" : INTEGER,
     "title" : STRING,
-    "min_point" : INTEGER, 
-    "max_point" : INTEGER
 }
 ```
 response
@@ -188,5 +186,26 @@ response (방에 속한 모두에게 Response를 전달한다. )
     "is_fin" : BOOLEAN, /* 게임 끝났는지 */
     "who_is_win" : INTEGER, /* 게임이 끝났을 때 추가되는 값  - DRAW_GAME 0  */
     "who_is_turn" : INTEGER
+}
+```
+
+### PlayerLoad
+request
+```
+{
+    "user_id" : INTEGER, 
+    "token" : STRING
+}
+```
+
+response
+```
+{
+    "email" : STRING, 
+    "name" : STRING,
+    "win" : INTEGER, 
+    "draw" : INTEGER, 
+    "lose" : INTEGER,
+    "point" : INTEGER
 }
 ```

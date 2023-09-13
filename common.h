@@ -65,6 +65,7 @@ enum ServerMsg
     PlayerExitRoomResponse = 10,
     WhoIsTurnResponse = 11,
     PlayerTurnResponse = 12,
+    RankLoadResponse = 13
 };
 
 enum ClientMsg
@@ -79,6 +80,7 @@ enum ClientMsg
     RoomLoad = 7,
     PlayerLoad = 8,
     PlayerTurn = 9,
+    RankLoad = 10,
 };
 
 enum ErrorCode

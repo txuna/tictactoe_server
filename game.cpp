@@ -240,6 +240,13 @@ int Game::GameObject::ProcessClientProtocol(Net::TcpSocket* socket, Protocol *p)
             std::cout << std::setw(4) << res << '\n';
             break;
         }
+
+        case ClientMsg::RankLoad:
+        {
+            type = ServerMsg::RankLoadResponse;
+            std::cout << std::setw(4) << res << '\n';
+            break;
+        }
             
         default:
         {
@@ -365,6 +372,9 @@ void Game::GameObject::ExitPlayerInPlaying(Net::TcpSocket *socket)
         {
             other_player = players.LoadPlayer(room->host_id);
         }
+
+        // 룸상태 변경
+        room->state = RoomState::RoomReady;
     }
 
     // 게임이 진행중일 때 나갈 시 포인트 정산

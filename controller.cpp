@@ -204,6 +204,15 @@ json Controllers::Controller::Logout(const json& req)
     return response;
 }
 
+json Controllers::Controller::LoadRank(const json &req)
+{
+    json response = {
+        {"error", ErrorCode::None}
+    };
+
+    return response;
+}
+
 json Controllers::Controller::LoadPlayerInfo(const json &req)
 {
     json response = {
