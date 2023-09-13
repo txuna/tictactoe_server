@@ -372,9 +372,6 @@ void Game::GameObject::ExitPlayerInPlaying(Net::TcpSocket *socket)
         {
             other_player = players.LoadPlayer(room->host_id);
         }
-
-        // 룸상태 변경
-        room->state = RoomState::RoomReady;
     }
 
     // 게임이 진행중일 때 나갈 시 포인트 정산

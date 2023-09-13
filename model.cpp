@@ -299,9 +299,15 @@ void Model::RoomList::LogoutPlayerInRoom(uuid_t user_id, int room_id)
     {
         DeleteRoom(room_id);
     }
-    else if(user_id == room->host_id)
+
+    else
     {
-        room->host_id = room->other_id;
+        // 만약 호스트라면 호스트 자리 교체
+        if(user_id == room->host_id)
+        {
+            room->host_id = room->other_id;
+        }
+
         room->other_id = 0;
         room->state = RoomState::RoomReady;
         room->is_start = false;
