@@ -116,6 +116,7 @@ enum ErrorCode
     AlreadyRoomPlaying = 215,
 
     AlreadyLocatedStone = 216,
+    CannotJoinThisRoomYourPoint = 217,
 };
 
 class Protocol

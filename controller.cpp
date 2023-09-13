@@ -144,6 +144,7 @@ json Controllers::Controller::Register(const json& req)
     ErrorCode result;
     uuid_t user_id; 
 
+    // 이름도 중복 검사 가능한듯
     std::tie(result, user_id) = account_service->InsertAccount(email, hash, salt, name);
 
     if(result != ErrorCode::None)
@@ -254,22 +255,29 @@ json Controllers::Controller::CreateRoom(const json &req)
         {"error", result}
     }; 
 
-    if(req.contains("title") == false)
+    if(req.contains("title") == false
+    || req.contains("min_point") == false
+    || req.contains("max_point") == false)
     {
         response["error"] = ErrorCode::InvalidRequest;
         return response;
     }
 
-    if(req["title"].type() != json::value_t::string)
+    if(req["title"].type() != json::value_t::string
+    || req["min_point"].type() != json::value_t::number_unsigned
+    || req["max_point"].type() != json::value_t::number_unsigned)
     {
         response["error"] = ErrorCode::InvalidRequest;
         return response;
     }
 
+    int min_point = req["min_point"];
+    int max_point = req["max_point"];
     uuid_t user_id = req["user_id"]; 
     std::string title = req["title"];
 
-    if(Utility::Validation::VerifyRoomTitle(title) == false)
+    if(Utility::Validation::VerifyRoomTitle(title) == false
+    || Utility::Validation::VerifyPoint(min_point, max_point) == false)
     {
         response["error"] = ErrorCode::InvalidRequest;
         return response;
@@ -291,7 +299,7 @@ json Controllers::Controller::CreateRoom(const json &req)
         return response;
     }
 
-    Model::Room* room = new Model::Room(user_id, RoomState::RoomReady, title, rooms.room_index);
+    Model::Room* room = new Model::Room(user_id, RoomState::RoomReady, title, rooms.room_index, min_point, max_point);
     rooms.room_index += 1;
     rooms.AppendRoom(room);
 
@@ -305,6 +313,7 @@ json Controllers::Controller::CreateRoom(const json &req)
 
 // 자신이 이미 방에 들어가 있는지 확인 
 // 방이 실제로 존재하며 WAITING 상태인지 확인 
+// 포인트 구간 확인
 json Controllers::Controller::JoinRoom(const json &req)
 {
     json response = {
@@ -356,6 +365,23 @@ json Controllers::Controller::JoinRoom(const json &req)
         return response;
     }
 
+    // 플레이어 포인트 확인
+    Model::DatabaseUser *user; 
+    ErrorCode result;
+    std::tie(result, user) = player_service->LoadPlayer(user_id);
+    if(result != ErrorCode::None)
+    {
+        response["error"] = ErrorCode::NoneExistPlayer;
+        return response;
+    }
+
+    if(user->point < room->min_point
+    || user->point > room->max_point)
+    {
+        response["error"] = ErrorCode::CannotJoinThisRoomYourPoint;
+        return response;
+    }
+
     // 플레이어랑 방 정보 변경 및 저장 
     player->state = PlayerState::Playing;
     player->room_id = room_id;
@@ -386,6 +412,8 @@ json Controllers::Controller::JoinRoom(const json &req)
     };
 
     res_queue.push(Model::Response(host_player->fd, j, type));
+
+    delete user;
     return response;
 }
 

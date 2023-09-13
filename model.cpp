@@ -41,8 +41,8 @@ Model::Player::~Player()
 
 }
 
-Model::Room::Room(uuid_t h, RoomState rs, std::string rt, int ri)
-: host_id(h), state(rs), title(rt), room_id(ri), other_id(0), is_start(false), who_is_turn(0)
+Model::Room::Room(uuid_t h, RoomState rs, std::string rt, int ri, int min_p, int max_p)
+: host_id(h), state(rs), title(rt), room_id(ri), other_id(0), is_start(false), who_is_turn(0), min_point(min_p), max_point(max_p)
 {
     
 }

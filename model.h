@@ -64,8 +64,10 @@ namespace Model
             uuid_t who_is_turn;
             /* 0 : blank, 1 : host player, 2 : other player*/
             int board[9] = {NONE_STONE};
+            int min_point; 
+            int max_point;
 
-            Room(uuid_t h, RoomState rs, std::string rt, int ri);
+            Room(uuid_t h, RoomState rs, std::string rt, int ri, int min_p, int max_p);
             ~Room();
             int CheckWin();
     };

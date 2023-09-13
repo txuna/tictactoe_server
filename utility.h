@@ -84,7 +84,7 @@ namespace Utility
                     return false;
                 }
 
-                if(name.length() < 8 || name.length() > 20)
+                if(name.length() < 4 || name.length() > 20)
                 {
                     return false;
                 }
@@ -111,6 +111,26 @@ namespace Utility
                 }
 
                 if(title.length() < 8 || title.length() > 40)
+                {
+                    return false;
+                }
+
+                return true;
+            }
+
+            static bool VerifyPoint(int min_point, int max_point)
+            {
+                if(min_point < 0 || min_point > 3000)
+                {
+                    return false;
+                }
+
+                if(max_point < 0 || max_point > 3000)
+                {
+                    return false;
+                }
+
+                if(min_point >= max_point)
                 {
                     return false;
                 }

@@ -51,7 +51,11 @@ request
 {
     "user_id" : INTEGER, 
     "token" : STRING,
-    "title" : STRING
+    "min_point" : INTEGER, 
+    "max_point" : INTEGER,
+    "title" : STRING,
+    "min_point" : INTEGER, 
+    "max_point" : INTEGER
 }
 ```
 response
@@ -125,7 +129,9 @@ response (방에 참가하는 또 다른 사람이 존재할시)
 ```
 
 ### PlayerExitRoomResponse
-response(방에 참가하고 있는 다른 사람이 나갈 시 현재 방에 참가하고 있는 이에게 전송) 
+(방에 참가하고 있는 다른 사람이 나갈 시 현재 방에 참가하고 있는 이에게 전송)   
+만약 진행중이라면 클라이언트 단에서 승리 UI 그리기 - 서버단에서는 포인트 정산 끝냈음   
+response  
 ```
 {
     "error" : INTEGER, 
@@ -153,7 +159,9 @@ response
             "host_id" : INTEGER, 
             "other_id" : INTEGER,
             "title" : STRING, 
-            "is_start" : BOOLEAN
+            "is_start" : BOOLEAN,
+            "min_point" : INTEGER, 
+            "max_point" : INTEGER,
         },
         {
             ...
