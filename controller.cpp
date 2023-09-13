@@ -1,7 +1,6 @@
 #include "controller.h"
 #include "utility.h"
 
-const std::regex email_pattern("(\\w+)(\\.|_)?(\\w*)@(\\w+)(\\.(\\w+))+");
 
 Controllers::Controller::Controller(Mysql::DB &dbc, Redis::DB &rc, Model::PlayerList &ps, Model::RoomList &rs, std::queue<Model::Response> &rq)
 : db_connection(dbc), redis_conn(rc), players(ps), rooms(rs), res_queue(rq)
@@ -53,7 +52,8 @@ json Controllers::Controller::Login(const json &req, socket_t fd)
     std::string password = req["password"];
     std::string token;
 
-    if(std::regex_match(email, email_pattern) == false)
+    if(Utility::Validation::VerifyEmail(email) == false
+    || Utility::Validation::VerifyPassword(password) == false)
     {
         response["error"] = ErrorCode::InvalidRequest;
         return response;
@@ -129,14 +129,17 @@ json Controllers::Controller::Register(const json& req)
     std::string email = req["email"]; 
     std::string password = req["password"]; 
     std::string name = req["name"];
-    std::string salt = Utility::Security::GenerateSalt(24);
-    std::string hash = Utility::Security::GenerateHash(password, salt);
 
-    if(std::regex_match(email, email_pattern) == false)
+    if(Utility::Validation::VerifyEmail(email) == false
+    || Utility::Validation::VerifyUserName(name) == false
+    || Utility::Validation::VerifyPassword(password) == false)
     {
         response["error"] = ErrorCode::InvalidRequest;
         return response;
     }
+
+    std::string salt = Utility::Security::GenerateSalt(24);
+    std::string hash = Utility::Security::GenerateHash(password, salt);
 
     ErrorCode result;
     uuid_t user_id; 
@@ -265,6 +268,12 @@ json Controllers::Controller::CreateRoom(const json &req)
 
     uuid_t user_id = req["user_id"]; 
     std::string title = req["title"];
+
+    if(Utility::Validation::VerifyRoomTitle(title) == false)
+    {
+        response["error"] = ErrorCode::InvalidRequest;
+        return response;
+    }
 
     // 중복 방 검사
     Model::Room *r = rooms.LoadRoomFromTitle(title);

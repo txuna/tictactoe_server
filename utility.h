@@ -56,6 +56,68 @@ namespace Utility
                 return Utility::Security::GenerateHash(plain, "");
             }
     };  
+
+    class Validation 
+    {
+        public:            
+            static bool VerifyEmail(std::string email)
+            {
+                const std::regex email_pattern("(\\w+)(\\.|_)?(\\w*)@(\\w+)(\\.(\\w+))+");
+                if(std::regex_match(email, email_pattern) == false)
+                {
+                    return false;
+                }
+
+                if(email.length() < 8 || email.length() > 40)
+                {
+                    return false;
+                }
+
+                return true;
+            }
+
+            static bool VerifyUserName(std::string name)
+            {
+                const std::regex username_pattern("^[a-zA-Z_][a-zA-Z0-9_]*$");
+                if(std::regex_match(name, username_pattern) == false)
+                {
+                    return false;
+                }
+
+                if(name.length() < 8 || name.length() > 20)
+                {
+                    return false;
+                }
+                
+                return true;
+            }
+
+            static bool VerifyPassword(std::string password)
+            {
+                if(password.length() < 8 || password.length() > 26)
+                {
+                    return false;
+                }
+                return true;
+            }
+
+            static bool VerifyRoomTitle(std::string title)
+            {
+                const std::regex title_pattern("^[a-zA-Z_][a-zA-Z0-9_]*$");
+
+                if(std::regex_match(title, title_pattern) == false)
+                {
+                    return false;
+                }
+
+                if(title.length() < 8 || title.length() > 40)
+                {
+                    return false;
+                }
+
+                return true;
+            }
+    };
 }
 
 #endif 
