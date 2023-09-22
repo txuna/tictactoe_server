@@ -46,6 +46,7 @@ std::tuple<ErrorCode, Model::Account*> Service::AccountService::LoadAccount(std:
     std::stringstream password;
     std::stringstream salt; 
     std::stringstream name; 
+    int permission; 
 
     if(db_connection.IsOpen() == false)
     {
@@ -55,7 +56,7 @@ std::tuple<ErrorCode, Model::Account*> Service::AccountService::LoadAccount(std:
     try
     {
         mysqlx::Table table = db_connection.GetTable("accounts");
-        mysqlx::RowResult result = table.select("user_id", "email", "password", "salt", "name")
+        mysqlx::RowResult result = table.select("user_id", "email", "password", "salt", "name", "permission")
         .where("email = :email")
         .bind("email", req_email).execute();
 
@@ -71,12 +72,14 @@ std::tuple<ErrorCode, Model::Account*> Service::AccountService::LoadAccount(std:
         password << row[2];
         salt << row[3];
         name << row[4];
+        permission = row[5];
 
         Model::Account *account = new Model::Account(user_id, 
                                                     email.str(), 
                                                     password.str(), 
                                                     salt.str(), 
-                                                    name.str());
+                                                    name.str(),
+                                                    permission);
 
         return std::make_tuple(ErrorCode::None, account);
     }
@@ -93,6 +96,7 @@ std::tuple<ErrorCode, Model::Account*> Service::AccountService::LoadAccountFromU
     std::stringstream password;
     std::stringstream salt; 
     std::stringstream name; 
+    int permission;
 
     if(db_connection.IsOpen() == false)
     {
@@ -102,7 +106,7 @@ std::tuple<ErrorCode, Model::Account*> Service::AccountService::LoadAccountFromU
     try
     {
         mysqlx::Table table = db_connection.GetTable("accounts");
-        mysqlx::RowResult result = table.select("user_id", "email", "password", "salt", "name")
+        mysqlx::RowResult result = table.select("user_id", "email", "password", "salt", "name", "permission")
         .where("user_id = :req_user_id")
         .bind("req_user_id", user_id).execute();
 
@@ -118,12 +122,14 @@ std::tuple<ErrorCode, Model::Account*> Service::AccountService::LoadAccountFromU
         password << row[2];
         salt << row[3];
         name << row[4];
+        permission = row[5];
 
         Model::Account *account = new Model::Account(user_id, 
                                                     email.str(), 
                                                     password.str(), 
                                                     salt.str(), 
-                                                    name.str());
+                                                    name.str(),
+                                                    permission);
 
         return std::make_tuple(ErrorCode::None, account);
     }

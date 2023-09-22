@@ -29,12 +29,14 @@ namespace Model
             std::string password; 
             std::string salt;
             std::string name;
+            int permission;
 
             Account(uuid_t user_id, 
                     std::string email, 
                     std::string password, 
                     std::string salt, 
-                    std::string name);
+                    std::string name,
+                    int permission);
                         
             ~Account();
     };

@@ -25,6 +25,7 @@ namespace Game
             Model::RoomList rooms;
             std::queue<Model::Response> res_queue;
             Controllers::Controller *controller = nullptr;
+            Net::TcpSocket *admin_socket = nullptr;
 
         public:
             GameObject(Mysql::DB &dbc, Redis::DB &rc);

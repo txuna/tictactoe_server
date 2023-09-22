@@ -247,6 +247,22 @@ int Game::GameObject::ProcessClientProtocol(Net::TcpSocket* socket, Protocol *p)
             std::cout << std::setw(4) << res << '\n';
             break;
         }
+
+        case ClientMsg::AdminFetchPlayerRequest:
+        {
+            res = controller->AdminFetchPlayers(j);
+            type = ServerMsg::AdminFetchPlayerResponse;
+            std::cout << std::setw(4) << res << '\n';
+            break;
+        }
+
+        case ClientMsg::AdminFetchRoomRequest:
+        {
+            res = controller->AdminFetchRooms(j);
+            type = ServerMsg::AdminFetchRoomResponse;
+            std::cout << std::setw(4) << res << '\n';
+            break;
+        }
             
         default:
         {

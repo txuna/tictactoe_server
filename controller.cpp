@@ -15,6 +15,28 @@ Controllers::Controller::~Controller()
     delete player_service;
 }
 
+json Controllers::Controller::AdminFetchPlayers(const json &req)
+{
+    json response = {
+        {"error", ErrorCode::None}
+    };
+
+    // Check if is admin 
+
+    return response;
+}
+
+json Controllers::Controller::AdminFetchRooms(const json &req)
+{
+    json response = {
+        {"error", ErrorCode::None}
+    };
+
+    // Check if is admin 
+
+    return response;
+}
+
 /*
     1. load account model from email
     2. check password (set password hash using stored salt)
@@ -38,6 +60,7 @@ json Controllers::Controller::Login(const json &req, socket_t fd)
     || req.contains("password") == false)
     {
         response["error"] = ErrorCode::InvalidRequest;
+        std::cout<<"1<<"<<std::endl;
         return response;
     }
 
@@ -45,6 +68,7 @@ json Controllers::Controller::Login(const json &req, socket_t fd)
     || req["password"].type() != json::value_t::string)
     {
         response["error"] = ErrorCode::InvalidRequest;
+        std::cout<<"2<<"<<std::endl;
         return response;
     }
 
@@ -56,6 +80,7 @@ json Controllers::Controller::Login(const json &req, socket_t fd)
     || Utility::Validation::VerifyPassword(password) == false)
     {
         response["error"] = ErrorCode::InvalidRequest;
+        std::cout<<"3<<"<<std::endl;
         return response;
     }
     
