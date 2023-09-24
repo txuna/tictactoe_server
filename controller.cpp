@@ -15,6 +15,87 @@ Controllers::Controller::~Controller()
     delete player_service;
 }
 
+
+json Controllers::Controller::AdminFetchGame(const json &req)
+{
+    json response = {
+        {"error", ErrorCode::None}
+    };
+
+    if(req.contains("room_id") == false)
+    {
+        response["error"] = ErrorCode::InvalidRequest;
+        return response;
+    }
+
+    if(req["room_id"].type() != json::value_t::number_unsigned)
+    {
+        response["error"] = ErrorCode::InvalidRequest;
+        return response;
+    }
+
+    int room_id = req["room_id"];
+    uuid_t user_id = req["user_id"];
+
+    Model::Player *player = players.LoadPlayer(user_id);
+    if(player == nullptr)
+    {
+        response["error"] = ErrorCode::NoneExistPlayer;
+        return response;
+    }
+
+    if(player->permission != Permission::Admin)
+    {
+        response["error"] = ErrorCode::NonePermission;
+        return response;
+    }
+
+    Model::Room *room = rooms.LoadRoomFromRoomId(room_id);
+    if(room == nullptr)
+    {
+        response["error"] = ErrorCode::NoneExistRoom;
+        return response;
+    }
+
+    if(room->is_start == false)
+    {
+        response["error"] = ErrorCode::RoomIsNotStart;
+        return response;
+    }
+
+    json js;
+
+    js["room_id"] = room->room_id;
+    js["host_id"] = room->host_id;
+    js["other_id"] = room->other_id;
+
+    Model::Player *host = players.LoadPlayer(room->host_id);
+    Model::Player *other = players.LoadPlayer(room->other_id);
+
+    if(host == nullptr)
+    {
+        js["host_name"] = "unknown";
+    }
+
+    if(other == nullptr)
+    {
+        js["other_name"] = "unknown";
+    }
+
+    js["who_is_turn"] = room->who_is_turn;
+    js["title"] = room->title;
+
+    json board = json::array();
+    for(int i=0;i<9;i++)
+    {
+        board.push_back(room->board[i]);
+    }
+    
+    js["board"] = board;
+    response["game"] = js;
+    return response;
+}
+
 json Controllers::Controller::AdminFetchPlayers(const json &req)
 {
     json response = {

@@ -25,8 +25,8 @@ std::tuple<ErrorCode, uuid_t> Service::AccountService::InsertAccount(std::string
         uuid_t user_id; 
 
         mysqlx::Table table = db_connection.GetTable("accounts");
-        mysqlx::Result result = table.insert("email", "password", "salt", "name")
-        .values(email, password, salt, name)
+        mysqlx::Result result = table.insert("email", "password", "salt", "name", "permission")
+        .values(email, password, salt, name, 0)
         .execute();
 
         user_id = result.getAutoIncrementValue();

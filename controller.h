@@ -52,6 +52,7 @@ namespace Controllers
             json LoadRank(const json &req);
             json AdminFetchPlayers(const json &req);
             json AdminFetchRooms(const json &req);
+            json AdminFetchGame(const json &req);
 
 
             int CalculateGame(const json &req, json &response, Model::Room *room);

@@ -74,6 +74,7 @@ enum ServerMsg
     RankLoadResponse = 13,
     AdminFetchPlayerResponse = 14,
     AdminFetchRoomResponse = 15,
+    AdminFetchGameResponse = 16,
 };
 
 enum ClientMsg
@@ -91,6 +92,7 @@ enum ClientMsg
     RankLoad = 10,
     AdminFetchPlayerRequest = 11,
     AdminFetchRoomRequest = 12,
+    AdminFetchGameRequest = 13,
 };
 
 enum ErrorCode
