@@ -38,6 +38,12 @@ using namespace nlohmann::literals;
 
 #define DRAW_GAME 0
 
+enum Permission
+{
+    User = 0,
+    Admin = 1
+};
+
 enum PlayerState
 {
     Lobby = 0,
@@ -123,6 +129,9 @@ enum ErrorCode
 
     AlreadyLocatedStone = 216,
     CannotJoinThisRoomYourPoint = 217,
+
+    /* Admin */
+    NonePermission = 301,
 };
 
 class Protocol

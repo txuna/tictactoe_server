@@ -50,7 +50,8 @@ namespace Model
             socket_t fd;
             int room_id;
             std::string name;
-            Player(uuid_t u, socket_t f, PlayerState s, std::string t, std::string n);
+            int permission;
+            Player(uuid_t u, socket_t f, PlayerState s, std::string t, std::string n, int permission);
             ~Player();
     };
 
@@ -82,13 +83,13 @@ namespace Model
             PlayerList();
             ~PlayerList();
 
-            void AppendPlayer(uuid_t user_id, socket_t fd, PlayerState state, std::string token, std::string name);
+            void AppendPlayer(uuid_t user_id, socket_t fd, PlayerState state, std::string token, std::string name, int permission);
             void DeletePlayerFromUserId(uuid_t user_id);
             void DeletePlayerFromSocketFd(socket_t fd);
             Player* LoadPlayer(uuid_t user_id);
             Player* LoadPlayerFromSocketFd(socket_t fd);
             void Print();
-            json LoadAllPlayers();
+            json LoadAllPlayer();
     };
 
     class RoomList

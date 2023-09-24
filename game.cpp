@@ -252,7 +252,7 @@ int Game::GameObject::ProcessClientProtocol(Net::TcpSocket* socket, Protocol *p)
         {
             res = controller->AdminFetchPlayers(j);
             type = ServerMsg::AdminFetchPlayerResponse;
-            std::cout << std::setw(4) << res << '\n';
+            //std::cout << std::setw(4) << res << '\n';
             break;
         }
 
@@ -260,7 +260,7 @@ int Game::GameObject::ProcessClientProtocol(Net::TcpSocket* socket, Protocol *p)
         {
             res = controller->AdminFetchRooms(j);
             type = ServerMsg::AdminFetchRoomResponse;
-            std::cout << std::setw(4) << res << '\n';
+            //std::cout << std::setw(4) << res << '\n';
             break;
         }
             
@@ -292,6 +292,7 @@ bool Game::GameObject::VerifyMiddleware(Protocol *p, json& j)
     if(j.contains("token") == false
     || j.contains("user_id") == false)
     {
+        std::cout<<"1"<<std::endl;
         return false;
     }
 

@@ -22,7 +22,43 @@ json Controllers::Controller::AdminFetchPlayers(const json &req)
     };
 
     // Check if is admin 
+    uuid_t user_id = req["user_id"];
+    Model::Player *player = players.LoadPlayer(user_id);
+    if(player == nullptr)
+    {
+        response["error"] = ErrorCode::NoneExistPlayer;
+        return response;
+    }
 
+    if(player->permission != Permission::Admin)
+    {
+        response["error"] = ErrorCode::NonePermission;
+        return response;
+    }
+
+    json rs; 
+    for(auto p: players.players)
+    {
+        Model::DatabaseUser *user = LoadUser(p->user_id);
+        if(user == nullptr)
+        {
+            continue;
+        }
+
+        rs.push_back({
+            {"user_id", user->user_id},
+            {"win", user->win},
+            {"lose", user->lose},
+            {"draw", user->draw},
+            {"point", user->point},
+            {"name", p->name},
+            {"state", p->state}, 
+            {"room_id", p->room_id},
+            {"permission", p->permission}
+        });
+    }
+    
+    response["players"] = rs;
     return response;
 }
 
@@ -33,7 +69,36 @@ json Controllers::Controller::AdminFetchRooms(const json &req)
     };
 
     // Check if is admin 
+    uuid_t user_id = req["user_id"];
+    Model::Player *player = players.LoadPlayer(user_id);
+    if(player == nullptr)
+    {
+        response["error"] = ErrorCode::NoneExistPlayer;
+        return response;
+    }
 
+    if(player->permission != Permission::Admin)
+    {
+        response["error"] = ErrorCode::NonePermission;
+        return response;
+    }
+
+    json rs; 
+    for(auto r: rooms.rooms)
+    {
+        rs.push_back({
+            {"room_id", r->room_id},
+            {"title", r->title},
+            {"state", r->state},
+            {"is_start", r->is_start},
+            {"min_point", r->min_point},
+            {"max_point", r->max_point}, 
+            {"host_id", r->host_id},
+            {"other_id", r->other_id},
+        });
+    }
+
+    response["rooms"] = rs;
     return response;
 }
 
@@ -115,7 +180,7 @@ json Controllers::Controller::Login(const json &req, socket_t fd)
     response["user_id"] = account->user_id;
 
     /* 플레이어 추가 */
-    players.AppendPlayer(account->user_id, fd, PlayerState::Lobby, token, account->name);
+    players.AppendPlayer(account->user_id, fd, PlayerState::Lobby, token, account->name, account->permission);
 
     delete account;
     return response;

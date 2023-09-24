@@ -32,8 +32,8 @@ Model::Account::~Account()
 
 }
 
-Model::Player::Player(uuid_t u, socket_t f, PlayerState s, std::string t, std::string n)
-: user_id(u), fd(f), state(s), token(t), room_id(0), name(n)
+Model::Player::Player(uuid_t u, socket_t f, PlayerState s, std::string t, std::string n, int p)
+: user_id(u), fd(f), state(s), token(t), room_id(0), name(n), permission(p)
 {
 
 }
@@ -123,7 +123,8 @@ void Model::PlayerList::AppendPlayer(uuid_t user_id,
                                      socket_t fd, 
                                      PlayerState state, 
                                      std::string token, 
-                                     std::string name)
+                                     std::string name,
+                                     int permission)
 {
     Model::Player* p = LoadPlayer(user_id);
     /* 기존 유저라면 토큰만 갱신 */
@@ -133,7 +134,7 @@ void Model::PlayerList::AppendPlayer(uuid_t user_id,
         return;
     }
 
-    Model::Player* player = new Model::Player(user_id, fd, state, token, name);
+    Model::Player* player = new Model::Player(user_id, fd, state, token, name, permission);
     players.push_back(player);
 }
 
@@ -199,7 +200,9 @@ Model::Player *Model::PlayerList::LoadPlayer(uuid_t user_id)
     return nullptr;
 }
 
-json Model::PlayerList::LoadAllPlayers()
+
+
+json Model::PlayerList::LoadAllPlayer()
 {
     json res = {
         {"error", ErrorCode::None}
@@ -211,9 +214,11 @@ json Model::PlayerList::LoadAllPlayers()
         rs.push_back({
             {"user_id", p->user_id}, 
             {"name", p->name},
-            {"state", p->state},
+            {"state", p->state}
         });
     }
+
+    res["players"] = rs;
 
     return res;
 }
