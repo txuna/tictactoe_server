@@ -791,7 +791,7 @@ json Controllers::Controller::PlayerTurn(const json &req)
     }
 
     // 플레이어의 턴이 맞는지 확인 
-    if(user_id == room->who_is_turn)
+    if(user_id != room->who_is_turn)
     {
         response["error"] = ErrorCode::IsNotYourTurn;
         return response;
