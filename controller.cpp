@@ -736,14 +736,12 @@ json Controllers::Controller::PlayerTurn(const json &req)
 
     if(req.contains("position") == false)
     {
-        std::cout<<1<<std::endl;
         response["error"] = ErrorCode::InvalidRequest;
         return response;
     }
 
-    if(req["position"].type() == json::value_t::number_unsigned)
+    if(req["position"].type() != json::value_t::number_unsigned)
     {
-        std::cout<<2<<std::endl;
         response["error"] = ErrorCode::InvalidRequest;
         return response;
     }
@@ -753,7 +751,6 @@ json Controllers::Controller::PlayerTurn(const json &req)
 
     if(pos < 0 || pos > 8)
     {
-        std::cout<<3<<std::endl;
         response["error"] = ErrorCode::InvalidRequest;
         return response;
     }
