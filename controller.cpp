@@ -76,10 +76,18 @@ json Controllers::Controller::AdminFetchGame(const json &req)
     {
         js["host_name"] = "unknown";
     }
+    else
+    {
+        js["host_name"] = host->name;
+    }
 
     if(other == nullptr)
     {
         js["other_name"] = "unknown";
+    }
+    else
+    {
+        js["other_name"] = other->name;
     }
 
     js["who_is_turn"] = room->who_is_turn;
