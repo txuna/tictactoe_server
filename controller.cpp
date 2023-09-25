@@ -843,11 +843,13 @@ int Controllers::Controller::CalculateGame(const json &req, json &response, Mode
     {
         room->board[pos] = HOST_STONE;
         response["who_is_turn"] = room->other_id;
+        room->who_is_turn = room->other_id;
     }
     else
     {
         room->board[pos] = OTHER_STONE;
         response["who_is_tuern"] = room->host_id;
+        room->who_is_turn = room->host_id;
     }
 
     int win_type = room->CheckWin();
