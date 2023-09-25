@@ -749,7 +749,7 @@ json Controllers::Controller::PlayerTurn(const json &req)
     uuid_t user_id = req["user_id"];
     int pos = req["position"]; 
 
-    if(pos < 0 && pos > 8)
+    if(pos < 0 || pos > 8)
     {
         response["error"] = ErrorCode::InvalidRequest;
         return response;
