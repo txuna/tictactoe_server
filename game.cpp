@@ -100,6 +100,7 @@ void Game::GameObject::ProcessClientInput(Net::TcpSocket *socket, int mask)
         Protocol *p = socket->ReadSocket();
         if(p == nullptr)
         {
+            std::cout<<"Failed Read Packet Client: "<<socket->socket_fd<<std::endl;
             del_flag = true;
         }
         else
@@ -114,6 +115,7 @@ void Game::GameObject::ProcessClientInput(Net::TcpSocket *socket, int mask)
     }
     else
     {
+        std::cout<<"Get Disconnect Signal from client: "<<socket->socket_fd<<std::endl;
         del_flag = true;
     }
 
@@ -124,8 +126,8 @@ void Game::GameObject::ProcessClientInput(Net::TcpSocket *socket, int mask)
     */
     if(del_flag)
     {
+        std::cout<<"Client disconnected from server: "<<socket->socket_fd<<std::endl;
         ExitPlayerInPlaying(socket);
-
         players.DeletePlayerFromSocketFd(socket->socket_fd);
         el.DelEvent(socket);
     }
