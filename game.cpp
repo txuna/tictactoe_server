@@ -88,11 +88,9 @@ int Game::GameObject::ProcessAccept(Net::TcpSocket *socket, int mask)
 }
 
 /*
-    먼저 protocol부분이랑 length부분만 읽고 
-    length부분에 따라서 그 다음 바이트를 읽는다. 
-
-    읽었을 때 에러값 확인 
-    만약 length가 SOCKET_BUFFER보다 크다면 
+    EPOLLET가 아닌 EPOLLIN이라서 덜 읽더라도 다시 알림을 받을 수 있음
+    정상적인 패킷이 2개가 붙어서 오더라도 length만큼 읽고 
+    다음 패킷이 있더라도 알림을 받아서 읽을 수 있음
 */
 void Game::GameObject::ProcessClientInput(Net::TcpSocket *socket, int mask)
 {

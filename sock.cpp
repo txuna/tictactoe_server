@@ -124,7 +124,14 @@ Protocol *Net::TcpSocket::ReadSocket()
     {
         return nullptr;
     }
-
+    /* 
+        length 최대 길이 확인
+    */
+    if(length >= SOCKET_BUFFER)
+    {
+        return nullptr;
+    }
+    
     msg = new byte_t[length]();
     memset(msg, 0, length);
     
