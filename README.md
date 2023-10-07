@@ -6,6 +6,7 @@ Server : C++, Mysql, redis
 Client : 제작예정(Unity예상)  
 
 # Architecture 
+![123](./image/server.jpg)
 
 # Porotocol 
 Read The Protocol Document   
