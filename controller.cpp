@@ -214,7 +214,6 @@ json Controllers::Controller::Login(const json &req, socket_t fd)
     || req.contains("password") == false)
     {
         response["error"] = ErrorCode::InvalidRequest;
-        std::cout<<"1<<"<<std::endl;
         return response;
     }
 
@@ -222,7 +221,6 @@ json Controllers::Controller::Login(const json &req, socket_t fd)
     || req["password"].type() != json::value_t::string)
     {
         response["error"] = ErrorCode::InvalidRequest;
-        std::cout<<"2<<"<<std::endl;
         return response;
     }
 
@@ -234,7 +232,6 @@ json Controllers::Controller::Login(const json &req, socket_t fd)
     || Utility::Validation::VerifyPassword(password) == false)
     {
         response["error"] = ErrorCode::InvalidRequest;
-        std::cout<<"3<<"<<std::endl;
         return response;
     }
     
