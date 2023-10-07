@@ -200,6 +200,7 @@ int Net::TcpSocket::SendSocket(json& j, protocol_t p)
         return C_ERR;
     }
 
+    delete []buffer;
     return C_OK;
 }
 
