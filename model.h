@@ -90,6 +90,7 @@ namespace Model
             Player* LoadPlayerFromSocketFd(socket_t fd);
             void Print();
             json LoadAllPlayer();
+            void RemoveAll(); 
     };
 
     class RoomList
@@ -107,6 +108,7 @@ namespace Model
             void LogoutPlayerInRoom(uuid_t user_id, int room_id);
             void Print();
             json LoadAllRooms();
+            void RemoveAll();
     };
 
     class Response

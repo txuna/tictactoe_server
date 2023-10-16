@@ -119,6 +119,11 @@ Model::PlayerList::~PlayerList()
 
 }
 
+void Model::PlayerList::RemoveAll()
+{
+    players.clear();
+}
+
 void Model::PlayerList::AppendPlayer(uuid_t user_id, 
                                      socket_t fd, 
                                      PlayerState state, 
@@ -240,6 +245,11 @@ Model::RoomList::RoomList()
 Model::RoomList::~RoomList()
 {
 
+}
+
+void Model::RoomList::RemoveAll()
+{
+    rooms.clear();
 }
 
 void Model::RoomList::AppendRoom(Model::Room* room)

@@ -11,8 +11,10 @@ Game::GameObject::~GameObject()
     delete controller;
 
     // players 다지우기 
+    players.RemoveAll();
 
     // rooms 다 지우기 
+    rooms.RemoveAll();
 }
 
 int Game::GameObject::GameLoop(Net::TcpSocket *socket)
